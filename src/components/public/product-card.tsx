@@ -3,13 +3,12 @@ import { Link } from "@/i18n/routing";
 import { formatPrice } from "@/lib/currency";
 import type { ProductRating } from "@/lib/ratings";
 import { RatingStars } from "./rating-stars";
-
-const CUT_CORNER =
-    "[clip-path:polygon(0_0,calc(100%-1rem)_0,100%_1rem,100%_100%,0_100%)]";
+import { QuickAddButton } from "./quick-add-button";
 
 export type ProductConditionValue = "NEW" | "USED" | "REFURBISHED";
 
 export interface ProductCardData {
+    id: string;
     slug: string;
     name: string;
     image: string | null;
@@ -22,6 +21,8 @@ export interface ProductCardData {
     rating?: ProductRating | null;
     /** Optionnel : les listings qui ne le fournissent pas encore n'affichent pas le badge. */
     condition?: ProductConditionValue;
+    /** Ajout rapide en un clic seulement pour un produit simple (sans variante à choisir). */
+    hasVariants?: boolean;
 }
 
 export async function ProductCard({
@@ -48,9 +49,7 @@ export async function ProductCard({
                 : null;
 
     return (
-        <article
-            className={`group relative flex flex-col rounded-none border-2 border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 focus-within:-translate-y-1 focus-within:border-primary/40 ${CUT_CORNER}`}
-        >
+        <article className="group relative flex flex-col overflow-hidden rounded-[26px] border border-border bg-card transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_26px_50px_-20px_rgba(0,0,0,.25)] focus-within:-translate-y-1.5">
             <div className="relative aspect-square overflow-hidden bg-muted">
                 {product.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -65,13 +64,13 @@ export async function ProductCard({
                 )}
 
                 {conditionLabel && (
-                    <span className="absolute left-3 top-3 border border-foreground/20 bg-background/90 px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-foreground shadow-sm backdrop-blur-sm">
+                    <span className="absolute left-3 top-3 rounded-full border border-border bg-background/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-foreground shadow-sm backdrop-blur-sm">
                         {conditionLabel}
                     </span>
                 )}
 
                 {onSale && !outOfStock && (
-                    <span className="absolute right-3 top-3 border border-orange-900/40 bg-orange-600 px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-white shadow-sm">
+                    <span className="absolute right-3 top-3 rounded-full bg-orange-600 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white shadow-sm">
                         −{discount} %
                     </span>
                 )}
@@ -80,6 +79,12 @@ export async function ProductCard({
                     <span className="absolute inset-0 flex items-center justify-center bg-background/75 text-sm font-medium backdrop-blur-[2px]">
                         Rupture de stock
                     </span>
+                )}
+
+                {!outOfStock && !product.hasVariants && (
+                    <div className="absolute bottom-3 right-3">
+                        <QuickAddButton productId={product.id} name={product.name} />
+                    </div>
                 )}
             </div>
 
@@ -116,8 +121,8 @@ export async function ProductCard({
                     <span
                         className={
                             onSale
-                                ? "text-base font-semibold text-orange-600 dark:text-orange-400"
-                                : "text-base font-semibold"
+                                ? "font-display text-lg text-orange-600 dark:text-orange-400"
+                                : "font-display text-lg"
                         }
                     >
                         {formatPrice(

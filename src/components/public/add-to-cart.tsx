@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { IconShoppingCartPlus, IconLoader2 } from "@tabler/icons-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/public/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { addToCart } from "@/app/[locale]/(public)/cart/actions";
@@ -104,10 +104,10 @@ export function AddToCart({
                                     }}
                                     className={
                                         disabled
-                                            ? "rounded-lg border border-border px-3 py-1.5 text-sm text-muted-foreground line-through opacity-50"
+                                            ? "rounded-full border border-border px-3.5 py-1.5 text-sm text-muted-foreground line-through opacity-50"
                                             : active
-                                              ? "rounded-lg border-2 border-primary px-3 py-1.5 text-sm font-medium"
-                                              : "rounded-lg border border-border px-3 py-1.5 text-sm transition-colors hover:border-primary/40"
+                                              ? "rounded-full border-2 border-primary px-3.5 py-1.5 text-sm font-medium"
+                                              : "rounded-full border border-border px-3.5 py-1.5 text-sm transition-colors hover:border-primary/40"
                                     }
                                 >
                                     {option.value}

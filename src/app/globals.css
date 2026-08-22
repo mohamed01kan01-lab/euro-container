@@ -39,6 +39,7 @@
     --color-sidebar-ring: var(--sidebar-ring);
     --font-sans: var(--font-sans);
     --font-heading: var(--font-heading);
+    --font-display: var(--font-grifter-local), var(--font-heading), sans-serif;
     --font-mono: var(--font-mono);
     --radius-sm: calc(var(--radius) - 4px);
     --radius-md: calc(var(--radius) - 2px);
@@ -162,5 +163,55 @@
     }
     html {
         @apply font-sans;
+    }
+}
+
+/*
+ * Animations décoratives en boucle continue (hero collage, marquee) : CSS pur,
+ * pas de librairie JS — ces mouvements tournent en permanence, sans état à
+ * piloter (contrairement aux stagger reveals retirés du projet).
+ */
+@keyframes float1 {
+    0%,
+    100% {
+        transform: translate3d(0, 0, 0) rotate(var(--float-rotate, 0deg));
+    }
+    50% {
+        transform: translate3d(0, -22px, 0) rotate(calc(var(--float-rotate, 0deg) + 5deg));
+    }
+}
+@keyframes float2 {
+    0%,
+    100% {
+        transform: translate3d(0, 0, 0) rotate(var(--float-rotate, 0deg));
+    }
+    50% {
+        transform: translate3d(0, 18px, 0) rotate(calc(var(--float-rotate, 0deg) - 4deg));
+    }
+}
+@keyframes marquee {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+.animate-float-1 {
+    animation: float1 11s ease-in-out infinite;
+}
+.animate-float-2 {
+    animation: float2 13s ease-in-out infinite;
+}
+.animate-marquee {
+    animation: marquee 28s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-float-1,
+    .animate-float-2,
+    .animate-marquee {
+        animation: none;
     }
 }

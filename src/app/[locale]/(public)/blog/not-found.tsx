@@ -1,6 +1,6 @@
 import { Link } from "@/i18n/routing";
 import { IconArrowLeft } from "@tabler/icons-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/public/button";
 
 export default function BlogNotFound() {
     return (
@@ -9,7 +9,7 @@ export default function BlogNotFound() {
                 <p className="text-sm font-semibold text-primary tracking-widest uppercase">
                     Erreur 404
                 </p>
-                <h1 className="text-5xl font-bold tracking-tight">Article introuvable</h1>
+                <h1 className="font-display text-5xl tracking-tight">Article introuvable</h1>
                 <p className="text-muted-foreground mt-3 max-w-md mx-auto">
                     Cet article n&apos;existe pas ou a été dépublié.
                     Découvrez les autres articles du blog.

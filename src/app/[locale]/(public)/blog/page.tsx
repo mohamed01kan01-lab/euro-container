@@ -8,7 +8,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { getSiteSettings } from "@/app/(admin)/dashboard/settings/actions";
 import { PostCard, type PostCardData } from "@/components/public/post-card";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/public/button";
 
 export const revalidate = 60;
 
@@ -95,7 +95,7 @@ export default async function BlogPage({ searchParams }: PageProps) {
             {/* Hero */}
             <section className="border-b border-border bg-linear-to-b from-muted/50 to-background">
                 <div className="mx-auto max-w-5xl px-4 py-12 sm:py-16">
-                    <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                    <h1 className="font-display text-3xl tracking-tight sm:text-4xl">
                         {activeCategory ? activeCategory.name : "Blog"}
                     </h1>
                     <p className="mt-3 max-w-xl text-muted-foreground">
@@ -224,8 +224,8 @@ function FilterPill({
             aria-current={active}
             className={
                 active
-                    ? "whitespace-nowrap rounded-full bg-primary px-3.5 py-1.5 text-xs font-medium text-primary-foreground transition-colors"
-                    : "whitespace-nowrap rounded-full border border-border px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                    ? "whitespace-nowrap rounded-full bg-orange-600 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors"
+                    : "whitespace-nowrap rounded-full border border-border px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-orange-600/40 hover:text-foreground"
             }
         >
             {children}

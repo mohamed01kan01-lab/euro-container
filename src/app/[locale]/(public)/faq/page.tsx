@@ -30,7 +30,7 @@ export default async function FaqPage() {
 
     return (
         <section className="mx-auto max-w-3xl px-4 py-14 sm:py-20">
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            <h1 className="font-display text-3xl tracking-tight sm:text-4xl">
                 {t("title")}
             </h1>
             <p className="mt-4 text-lg text-muted-foreground text-pretty">

@@ -16,7 +16,11 @@
         "returns": "Politique de retours",
         "shipping": "Livraison",
         "terms": "CGV",
-        "contact": "Contact"
+        "contact": "Contact",
+        "navTitle": "Navigation",
+        "legalTitle": "Informations",
+        "contactTitle": "Contact",
+        "followTitle": "Suivez-nous"
     },
     "common": {
         "conditionNew": "Neuf",
@@ -32,6 +36,9 @@
         "statsProducts": "{count} conteneurs référencés",
         "statsCategories": "{count} catégories",
         "statsYears": "20+ ans d'expérience",
+        "heroStatProducts": "conteneurs référencés",
+        "heroStatCategories": "catégories",
+        "heroStatYears": "ans d'expérience",
         "categoriesEyebrow": "Catalogue",
         "categoriesTitle": "Nos catégories",
         "categoriesSubtitle": "Du conteneur maritime standard à l'habitat modulaire, trouvez la solution adaptée à votre projet.",

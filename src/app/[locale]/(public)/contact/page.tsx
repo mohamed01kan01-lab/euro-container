@@ -23,7 +23,7 @@ export default async function ContactPage() {
 
     return (
         <section className="mx-auto max-w-3xl px-4 py-14 sm:py-20">
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            <h1 className="font-display text-3xl tracking-tight sm:text-4xl">
                 {t("title")}
             </h1>
             <p className="mt-4 text-lg text-muted-foreground text-pretty">
@@ -34,9 +34,9 @@ export default async function ContactPage() {
                 {settings.contactEmail && (
                     <a
                         href={`mailto:${settings.contactEmail}`}
-                        className="flex items-start gap-4 rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/30"
+                        className="flex items-start gap-4 rounded-[24px] border border-border bg-card p-5 transition-colors hover:border-primary/30"
                     >
-                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
                             <IconMail size={20} />
                         </span>
                         <div>
@@ -51,9 +51,9 @@ export default async function ContactPage() {
                 {settings.phone && (
                     <a
                         href={`tel:${settings.phone}`}
-                        className="flex items-start gap-4 rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/30"
+                        className="flex items-start gap-4 rounded-[24px] border border-border bg-card p-5 transition-colors hover:border-primary/30"
                     >
-                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
                             <IconPhone size={20} />
                         </span>
                         <div>
@@ -66,8 +66,8 @@ export default async function ContactPage() {
                 )}
 
                 {settings.address && (
-                    <div className="flex items-start gap-4 rounded-xl border border-border bg-card p-5 sm:col-span-2">
-                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <div className="flex items-start gap-4 rounded-[24px] border border-border bg-card p-5 sm:col-span-2">
+                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
                             <IconMapPin size={20} />
                         </span>
                         <div>
@@ -81,7 +81,7 @@ export default async function ContactPage() {
             </div>
 
             {settings.address && (
-                <div className="mt-6 overflow-hidden rounded-xl border border-border">
+                <div className="mt-6 overflow-hidden rounded-[24px] border border-border">
                     <iframe
                         src={mapEmbedUrl(settings.address)}
                         title={t("address")}

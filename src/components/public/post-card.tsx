@@ -1,8 +1,5 @@
 import { Link } from "@/i18n/routing";
 
-const CUT_CORNER =
-    "[clip-path:polygon(0_0,calc(100%-1rem)_0,100%_1rem,100%_100%,0_100%)]";
-
 export interface PostCardData {
     slug: string;
     title: string;
@@ -24,9 +21,7 @@ export function PostCard({ post }: { post: PostCardData }) {
         : null;
 
     return (
-        <article
-            className={`group relative flex flex-col rounded-none border-2 border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 focus-within:-translate-y-1 focus-within:border-primary/40 ${CUT_CORNER}`}
-        >
+        <article className="group relative flex flex-col overflow-hidden rounded-[26px] border border-border bg-card transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_26px_50px_-20px_rgba(0,0,0,.25)] focus-within:-translate-y-1.5">
             <div className="aspect-video overflow-hidden bg-muted">
                 {post.featuredImage ? (
                     // eslint-disable-next-line @next/next/no-img-element

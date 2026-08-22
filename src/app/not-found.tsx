@@ -9,7 +9,7 @@ export default function NotFound() {
                 <p className="text-sm font-semibold text-primary tracking-widest uppercase">
                     Erreur 404
                 </p>
-                <h1 className="text-6xl font-bold tracking-tight">
+                <h1 className="font-display text-6xl tracking-tight">
                     Page introuvable
                 </h1>
                 <p className="text-muted-foreground mt-3 max-w-md mx-auto">
@@ -24,11 +24,6 @@ export default function NotFound() {
                     Retour à l&apos;accueil
                 </Link>
             </Button>
-
-            <footer className="absolute bottom-6 text-xs text-muted-foreground">
-                <strong className="font-semibold text-foreground">NextPress</strong>
-                {" "}— L&apos;alternative moderne à WordPress
-            </footer>
         </main>
     );
 }

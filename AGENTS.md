@@ -27,7 +27,7 @@ Tailwind CSS 4.3 for styling (mobile first)
 Avoid creating custom classes with Tailwind CSS as much as possible.
 For the UI, use shadcn/ui components.
 Use tabler/icons packages for all icons in this project
-Design system (palette, typography): industrial/maritime identity — primary #64748B, accent #EA580C, headings in Lexend, body in Source Sans 3. Not NextPress's default blue/Outfit.
+Design system: palette stays industrial/maritime — primary #64748B, accent #EA580C, not NextPress's default blue/Outfit. Typography/shape language (2026-08-22 revision, inspired by the chez-charly project's public UI): body in Source Sans 3; display font is Grifter (`--font-display`, local .otf under `src/app/fonts/`, licensed for this use) for H1/H2 and big key-figures, Lexend (`--font-heading`) stays for admin dashboard and small labels only — never repurpose `--font-heading` for public display text. Public-facing shapes are rounded/pill (`rounded-full` buttons, `rounded-[20–34px]` cards), not sharp/cut-corner. Decorative motifs available in `src/components/public/`: `curve-accent.tsx` (SVG accent lines), `marquee.tsx` (CSS-only scrolling banner), plus `.animate-float-1`/`.animate-float-2` keyframes in globals.css for floating photo collages. No GSAP anywhere in the public site (removed by explicit request) — all public animation is plain CSS.
 
 # Year context
 

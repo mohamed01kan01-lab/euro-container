@@ -7,28 +7,27 @@ import { cn } from "@/lib/utils";
 /**
  * Bouton pour la partie publique du site : mêmes primitives (cva + Slot)
  * que `components/ui/button`, mais un langage visuel volontairement
- * différent (angles francs, empattement bas, majuscules sur le CTA
- * principal) pour ne pas ressembler à un bouton shadcn par défaut.
+ * différent (pilule, majuscules + gras sur le CTA principal, lift au survol)
+ * pour ne pas ressembler à un bouton shadcn par défaut.
  */
 const buttonVariants = cva(
-    "group/button inline-flex shrink-0 items-center justify-center rounded-sm border border-b-[3px] bg-clip-padding font-heading text-sm font-semibold whitespace-nowrap transition-all outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/50 active:translate-y-px active:border-b disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+    "group/button inline-flex shrink-0 items-center justify-center rounded-full border-2 border-transparent bg-clip-padding font-display text-sm font-bold whitespace-nowrap transition-all outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/50 active:translate-y-px disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
     {
         variants: {
             variant: {
                 default:
-                    "border-primary/50 bg-primary text-primary-foreground hover:bg-primary/90",
+                    "bg-primary text-primary-foreground shadow-[0_10px_24px_-8px_var(--color-primary)] hover:-translate-y-0.5 hover:bg-primary/90",
                 accent:
-                    "border-orange-900/60 bg-orange-600 uppercase tracking-wide text-white hover:bg-orange-700 focus-visible:ring-orange-600/40",
+                    "bg-orange-600 uppercase tracking-wide text-white shadow-[0_14px_28px_-10px_rgba(234,88,12,.55)] hover:-translate-y-0.5 hover:bg-orange-700 focus-visible:ring-orange-600/40",
                 outline:
-                    "border-border bg-transparent text-foreground hover:bg-secondary hover:border-foreground/30",
-                ghost:
-                    "border-transparent text-foreground hover:bg-secondary",
+                    "border-foreground/25 bg-transparent text-foreground hover:-translate-y-0.5 hover:border-foreground hover:bg-secondary",
+                ghost: "text-foreground hover:bg-secondary",
             },
             size: {
-                default: "h-9 gap-1.5 px-4",
-                sm: "h-8 gap-1 px-3 text-[0.8rem]",
-                lg: "h-11 gap-2 px-6 text-[0.95rem]",
-                icon: "size-9",
+                default: "h-10 gap-1.5 px-5",
+                sm: "h-9 gap-1 px-4 text-[0.8rem]",
+                lg: "h-12 gap-2 px-7 text-[0.95rem]",
+                icon: "size-10",
             },
         },
         defaultVariants: {

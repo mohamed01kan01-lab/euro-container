@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { IconMessageReply, IconCornerDownRight } from "@tabler/icons-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/public/button";
 import { CommentForm } from "./comment-form";
 
 export interface PublicComment {

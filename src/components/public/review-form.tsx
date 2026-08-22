@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Link } from "@/i18n/routing";
 import { IconLoader2, IconCheck } from "@tabler/icons-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/public/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";

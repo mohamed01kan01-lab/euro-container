@@ -9,7 +9,7 @@ export function LocaleSwitcher() {
     const router = useRouter();
 
     return (
-        <div className="flex items-center gap-0.5 rounded-lg bg-muted p-0.5 text-xs font-medium">
+        <div className="flex items-center gap-0.5 rounded-full bg-secondary p-0.5 text-xs font-bold">
             {routing.locales.map((locale) => (
                 <button
                     key={locale}
@@ -18,8 +18,8 @@ export function LocaleSwitcher() {
                     onClick={() => router.push(pathname, { locale })}
                     className={
                         locale === activeLocale
-                            ? "rounded-md bg-background px-2 py-1 shadow-sm"
-                            : "rounded-md px-2 py-1 text-muted-foreground transition-colors hover:text-foreground"
+                            ? "rounded-full bg-orange-600 px-2.5 py-1 text-white"
+                            : "rounded-full px-2.5 py-1 text-muted-foreground transition-colors hover:text-foreground"
                     }
                 >
                     {locale.toUpperCase()}

@@ -44,7 +44,7 @@ export default async function CheckoutPage() {
     if (zones.length === 0 && pickupPoints.length === 0) {
         return (
             <div className="mx-auto max-w-md px-4 py-24 text-center">
-                <h1 className="text-xl font-semibold">
+                <h1 className="font-display text-xl">
                     Commande indisponible
                 </h1>
                 <p className="mt-2 text-sm text-muted-foreground">
@@ -57,7 +57,7 @@ export default async function CheckoutPage() {
 
     return (
         <div className="mx-auto max-w-5xl px-4 py-10">
-            <h1 className="mb-8 text-2xl font-bold tracking-tight sm:text-3xl">
+            <h1 className="mb-8 font-display text-2xl tracking-tight sm:text-3xl">
                 Finaliser la commande
             </h1>
 
@@ -87,8 +87,10 @@ export default async function CheckoutPage() {
                     freeShipping={cart.freeShipping}
                 />
 
-                <aside className="space-y-4 rounded-xl border border-border bg-card p-5 lg:sticky lg:top-24">
-                    <h2 className="text-sm font-semibold">Votre commande</h2>
+                <aside className="space-y-4 rounded-[26px] border border-border bg-card p-5 lg:sticky lg:top-24">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-orange-600">
+                        Votre commande
+                    </p>
 
                     <ul className="space-y-3">
                         {cart.lines.map((line) => (

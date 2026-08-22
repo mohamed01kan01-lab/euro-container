@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { Link } from "@/i18n/routing";
 import { IconTrash, IconPhoto } from "@tabler/icons-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/public/button";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/currency";
 import type { CartLine } from "@/lib/cart";
@@ -51,7 +51,7 @@ export function CartLines({ lines, currency }: CartLinesProps) {
                 <li key={line.key} className="flex gap-4 py-4 first:pt-0">
                     <Link
                         href={`/product/${line.slug}`}
-                        className="h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-border bg-muted"
+                        className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-border bg-muted"
                         tabIndex={-1}
                         aria-hidden
                     >
@@ -94,7 +94,7 @@ export function CartLines({ lines, currency }: CartLinesProps) {
                                 </p>
                             </div>
 
-                            <p className="whitespace-nowrap text-sm font-semibold">
+                            <p className="whitespace-nowrap font-display text-base">
                                 {formatPrice(line.lineTotal, currency)}
                             </p>
                         </div>

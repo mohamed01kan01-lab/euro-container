@@ -4,7 +4,7 @@ import { IconShoppingCartOff, IconArrowRight } from "@tabler/icons-react";
 import { getCart } from "@/lib/cart";
 import { getSiteSettings } from "@/app/(admin)/dashboard/settings/actions";
 import { formatPrice } from "@/lib/currency";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/public/button";
 import { Separator } from "@/components/ui/separator";
 import { CartLines } from "@/components/public/cart-lines";
 import { CouponField } from "@/components/public/coupon-field";
@@ -28,7 +28,7 @@ export default async function CartPage() {
                     />
                 </span>
                 <div className="space-y-1">
-                    <h1 className="text-xl font-semibold">
+                    <h1 className="font-display text-xl">
                         Votre panier est vide
                     </h1>
                     <p className="text-sm text-muted-foreground">
@@ -46,17 +46,19 @@ export default async function CartPage() {
 
     return (
         <div className="mx-auto max-w-5xl px-4 py-10">
-            <h1 className="mb-8 text-2xl font-bold tracking-tight sm:text-3xl">
+            <h1 className="mb-8 font-display text-2xl tracking-tight sm:text-3xl">
                 Votre panier
             </h1>
 
             <div className="grid gap-8 lg:grid-cols-[1fr_320px] lg:items-start">
-                <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
+                <div className="rounded-[26px] border border-border bg-card p-4 sm:p-5">
                     <CartLines lines={cart.lines} currency={currency} />
                 </div>
 
-                <aside className="space-y-4 rounded-xl border border-border bg-card p-5 lg:sticky lg:top-24">
-                    <h2 className="text-sm font-semibold">Récapitulatif</h2>
+                <aside className="space-y-4 rounded-[26px] border border-border bg-card p-5 lg:sticky lg:top-24">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-orange-600">
+                        Récapitulatif
+                    </p>
 
                     <CouponField
                         appliedCode={cart.couponCode}
@@ -100,7 +102,7 @@ export default async function CartPage() {
 
                     <div className="flex items-baseline justify-between">
                         <span className="font-semibold">Total</span>
-                        <span className="text-lg font-bold">
+                        <span className="font-display text-2xl text-orange-600">
                             {formatPrice(total, currency)}
                         </span>
                     </div>

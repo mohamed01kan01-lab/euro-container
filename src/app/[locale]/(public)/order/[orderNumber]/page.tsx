@@ -16,7 +16,7 @@ import {
     paymentInstructions,
     isPaymentMethod,
 } from "@/lib/payment";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/public/button";
 import { Separator } from "@/components/ui/separator";
 
 export const metadata: Metadata = {
@@ -57,7 +57,7 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
                 <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
                     <IconCircleCheck size={28} className="text-primary" />
                 </span>
-                <h1 className="text-2xl font-bold tracking-tight">
+                <h1 className="font-display text-2xl tracking-tight">
                     Merci, votre commande est enregistrée
                 </h1>
                 <p className="text-sm text-muted-foreground">
@@ -71,7 +71,7 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
             {/* Instructions de paiement : sans elles, un virement ou un
                 Mobile Money n'aboutirait jamais. */}
             {instructions && (
-                <section className="mt-8 rounded-xl border border-primary/30 bg-primary/5 p-5">
+                <section className="mt-8 rounded-[24px] border border-primary/30 bg-primary/5 p-5">
                     <h2 className="flex items-center gap-2 text-sm font-semibold">
                         <IconInfoCircle size={16} className="text-primary" />
                         Comment régler votre commande
@@ -86,8 +86,10 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
                 </section>
             )}
 
-            <section className="mt-8 rounded-xl border border-border bg-card p-5">
-                <h2 className="text-sm font-semibold">Récapitulatif</h2>
+            <section className="mt-8 rounded-[24px] border border-border bg-card p-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-orange-600">
+                    Récapitulatif
+                </p>
 
                 <ul className="mt-4 space-y-3">
                     {order.items.map((item) => (
@@ -138,9 +140,11 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
                         </dd>
                     </div>
                     <Separator className="my-2" />
-                    <div className="flex justify-between text-base font-semibold">
-                        <dt>Total</dt>
-                        <dd>{formatPrice(Number(order.total), currency)}</dd>
+                    <div className="flex items-baseline justify-between">
+                        <dt className="font-semibold">Total</dt>
+                        <dd className="font-display text-xl text-orange-600">
+                            {formatPrice(Number(order.total), currency)}
+                        </dd>
                     </div>
                 </dl>
 
@@ -152,7 +156,7 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
                 )}
             </section>
 
-            <section className="mt-6 rounded-xl border border-border bg-card p-5">
+            <section className="mt-6 rounded-[24px] border border-border bg-card p-5">
                 <h2 className="flex items-center gap-2 text-sm font-semibold">
                     {order.shippingMethod === "PICKUP" ? (
                         <>
@@ -187,7 +191,7 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
                                 </p>
                             )}
                         </div>
-                        <div className="overflow-hidden rounded-lg border border-border">
+                        <div className="overflow-hidden rounded-[20px] border border-border">
                             <iframe
                                 src={mapEmbedUrl(order.pickupPoint.address)}
                                 title={`Emplacement de ${order.pickupPoint.name}`}

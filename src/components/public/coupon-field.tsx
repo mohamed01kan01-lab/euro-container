@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { IconLoader2, IconTicket, IconX } from "@tabler/icons-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/public/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { applyCoupon, removeCoupon } from "@/app/[locale]/(public)/cart/actions";

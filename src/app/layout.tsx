@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Lexend, Source_Sans_3 } from "next/font/google";
+import localFont from "next/font/local";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -19,6 +20,15 @@ const sourceSans = Source_Sans_3({
     variable: "--font-sans",
     display: "swap",
     weight: ["400", "500", "600", "700"],
+});
+
+// Police display (titres/prix/chiffres-clés) réservée à la partie publique —
+// l'admin garde Lexend (--font-heading) intact, jamais référencée ici.
+const grifter = localFont({
+    src: "./fonts/grifter-bold.otf",
+    weight: "700",
+    variable: "--font-grifter-local",
+    display: "swap",
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -57,7 +67,7 @@ export default async function RootLayout({
     return (
         <html
             lang={locale}
-            className={`${lexend.variable} ${sourceSans.variable} h-full antialiased font-sans`}
+            className={`${lexend.variable} ${sourceSans.variable} ${grifter.variable} h-full antialiased font-sans`}
             suppressHydrationWarning
         >
             <body>

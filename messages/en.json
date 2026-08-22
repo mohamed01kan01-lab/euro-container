@@ -16,7 +16,11 @@
         "returns": "Returns policy",
         "shipping": "Shipping",
         "terms": "Terms of sale",
-        "contact": "Contact"
+        "contact": "Contact",
+        "navTitle": "Navigation",
+        "legalTitle": "Information",
+        "contactTitle": "Contact",
+        "followTitle": "Follow us"
     },
     "common": {
         "conditionNew": "New",
@@ -32,6 +36,9 @@
         "statsProducts": "{count} containers listed",
         "statsCategories": "{count} categories",
         "statsYears": "20+ years of experience",
+        "heroStatProducts": "containers listed",
+        "heroStatCategories": "categories",
+        "heroStatYears": "years of experience",
         "categoriesEyebrow": "Catalog",
         "categoriesTitle": "Our categories",
         "categoriesSubtitle": "From standard shipping containers to modular living spaces, find the right fit for your project.",

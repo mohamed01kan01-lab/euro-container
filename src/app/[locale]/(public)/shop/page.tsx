@@ -12,7 +12,8 @@ import {
     ProductCard,
     type ProductCardData,
 } from "@/components/public/product-card";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/public/button";
+import { CategoryFilterDrawer } from "@/components/public/category-filter-drawer";
 
 export const revalidate = 60;
 
@@ -78,6 +79,7 @@ export default async function ShopPage({ searchParams }: PageProps) {
                 categories: {
                     include: { category: { select: { name: true, slug: true } } },
                 },
+                _count: { select: { variants: true } },
             },
             orderBy: SORTS[sort].orderBy,
             skip: (page - 1) * PER_PAGE,
@@ -93,6 +95,7 @@ export default async function ShopPage({ searchParams }: PageProps) {
     const ratings = await getRatingMap(products.map((p) => p.id));
 
     const serialized: ProductCardData[] = products.map((p) => ({
+        id: p.id,
         slug: p.slug,
         name: p.name,
         image: p.images[0] ?? null,
@@ -101,6 +104,8 @@ export default async function ShopPage({ searchParams }: PageProps) {
         stock: p.stock,
         categories: p.categories.map((c) => c.category),
         rating: ratings.get(p.id) ?? null,
+        condition: p.condition,
+        hasVariants: p._count.variants > 0,
     }));
 
     const activeCategory = categories.find((c) => c.slug === categorySlug);
@@ -119,7 +124,7 @@ export default async function ShopPage({ searchParams }: PageProps) {
             {/* Hero */}
             <section className="border-b border-border bg-linear-to-b from-muted/50 to-background">
                 <div className="mx-auto max-w-6xl px-4 py-12 sm:py-16">
-                    <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                    <h1 className="font-display text-3xl tracking-tight sm:text-4xl">
                         {query
                             ? `Résultats pour « ${query} »`
                             : activeCategory
@@ -139,33 +144,50 @@ export default async function ShopPage({ searchParams }: PageProps) {
             <div className="sticky top-14 z-30 border-b border-border bg-background/85 backdrop-blur-sm">
                 <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
                     {categories.length > 0 && (
-                        <nav
-                            aria-label="Filtrer par catégorie"
-                            className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 lg:pb-0"
-                        >
-                            <FilterPill
-                                href={pageUrl(1, undefined, sort)}
-                                active={!categorySlug}
+                        <>
+                            <CategoryFilterDrawer
+                                label="Filtrer par catégorie"
+                                options={[
+                                    {
+                                        label: "Tous",
+                                        href: pageUrl(1, undefined, sort),
+                                        active: !categorySlug,
+                                    },
+                                    ...categories.map((cat) => ({
+                                        label: cat.name,
+                                        href: pageUrl(1, cat.slug, sort),
+                                        active: categorySlug === cat.slug,
+                                    })),
+                                ]}
+                            />
+                            <nav
+                                aria-label="Filtrer par catégorie"
+                                className="-mx-1 hidden gap-1.5 overflow-x-auto px-1 pb-1 md:flex lg:pb-0"
                             >
-                                Tous
-                            </FilterPill>
-                            {categories.map((cat) => (
                                 <FilterPill
-                                    key={cat.id}
-                                    href={pageUrl(1, cat.slug, sort)}
-                                    active={categorySlug === cat.slug}
+                                    href={pageUrl(1, undefined, sort)}
+                                    active={!categorySlug}
                                 >
-                                    {cat.name}
+                                    Tous
                                 </FilterPill>
-                            ))}
-                        </nav>
+                                {categories.map((cat) => (
+                                    <FilterPill
+                                        key={cat.id}
+                                        href={pageUrl(1, cat.slug, sort)}
+                                        active={categorySlug === cat.slug}
+                                    >
+                                        {cat.name}
+                                    </FilterPill>
+                                ))}
+                            </nav>
+                        </>
                     )}
 
                     {/* Tri par liens : l'état reste dans l'URL, donc partageable
                         et indexable, contrairement à un select contrôlé. */}
                     <nav
                         aria-label="Trier les produits"
-                        className="-mx-1 flex shrink-0 items-center gap-1 overflow-x-auto rounded-lg bg-muted p-1"
+                        className="-mx-1 flex shrink-0 items-center gap-1 overflow-x-auto rounded-full bg-muted p-1"
                     >
                         {(Object.keys(SORTS) as SortKey[]).map((key) => (
                             <Link
@@ -174,8 +196,8 @@ export default async function ShopPage({ searchParams }: PageProps) {
                                 aria-current={sort === key}
                                 className={
                                     sort === key
-                                        ? "whitespace-nowrap rounded-md bg-background px-3 py-1.5 text-xs font-medium shadow-sm"
-                                        : "whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                                        ? "whitespace-nowrap rounded-full bg-background px-3.5 py-1.5 text-xs font-medium shadow-sm"
+                                        : "whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
                                 }
                             >
                                 {SORTS[key].label}
@@ -285,8 +307,8 @@ function FilterPill({
             aria-current={active}
             className={
                 active
-                    ? "whitespace-nowrap rounded-full bg-primary px-3.5 py-1.5 text-xs font-medium text-primary-foreground transition-colors"
-                    : "whitespace-nowrap rounded-full border border-border px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                    ? "whitespace-nowrap rounded-full bg-orange-600 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors"
+                    : "whitespace-nowrap rounded-full border border-border px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-orange-600/40 hover:text-foreground"
             }
         >
             {children}

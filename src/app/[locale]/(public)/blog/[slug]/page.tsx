@@ -157,7 +157,7 @@ export default async function PostPage({ params }: PageProps) {
                         </div>
                     )}
 
-                    <h1 className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
+                    <h1 className="font-display text-3xl leading-tight tracking-tight sm:text-4xl">
                         {post.title}
                     </h1>
 
@@ -204,7 +204,7 @@ export default async function PostPage({ params }: PageProps) {
 
             <div className="mx-auto max-w-3xl px-4 py-10">
                 {post.featuredImage && (
-                    <figure className="-mt-4 mb-10 overflow-hidden rounded-xl border border-border">
+                    <figure className="-mt-4 mb-10 overflow-hidden rounded-[26px] border border-border">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                             src={post.featuredImage}
@@ -243,7 +243,7 @@ export default async function PostPage({ params }: PageProps) {
             {relatedSerialized.length > 0 && (
                 <aside className="border-t border-border bg-muted/30">
                     <div className="mx-auto max-w-5xl px-4 py-12">
-                        <h2 className="mb-6 text-xl font-semibold tracking-tight">
+                        <h2 className="mb-6 font-display text-xl tracking-tight">
                             Articles similaires
                         </h2>
                         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

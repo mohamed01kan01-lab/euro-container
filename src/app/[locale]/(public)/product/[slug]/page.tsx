@@ -112,6 +112,7 @@ export default async function ProductPage({ params }: PageProps) {
             categories: {
                 include: { category: { select: { name: true, slug: true } } },
             },
+            _count: { select: { variants: true } },
         },
         orderBy: { publishedAt: "desc" },
         take: 4,
@@ -120,6 +121,7 @@ export default async function ProductPage({ params }: PageProps) {
     const relatedRatings = await getRatingMap(related.map((p) => p.id));
 
     const relatedSerialized: ProductCardData[] = related.map((p) => ({
+        id: p.id,
         slug: p.slug,
         name: p.name,
         image: p.images[0] ?? null,
@@ -128,6 +130,8 @@ export default async function ProductPage({ params }: PageProps) {
         stock: p.stock,
         categories: p.categories.map((c) => c.category),
         rating: relatedRatings.get(p.id) ?? null,
+        condition: p.condition,
+        hasVariants: p._count.variants > 0,
     }));
 
     const stock =
@@ -199,7 +203,7 @@ export default async function ProductPage({ params }: PageProps) {
                             </div>
                         )}
 
-                        <h1 className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
+                        <h1 className="font-display text-3xl leading-tight tracking-tight sm:text-4xl">
                             {product.name}
                         </h1>
 
@@ -220,8 +224,8 @@ export default async function ProductPage({ params }: PageProps) {
                             <span
                                 className={
                                     onSale
-                                        ? "text-3xl font-bold text-orange-600 dark:text-orange-400"
-                                        : "text-3xl font-bold"
+                                        ? "font-display text-3xl text-orange-600 dark:text-orange-400"
+                                        : "font-display text-3xl"
                                 }
                             >
                                 {formatPrice(
@@ -271,7 +275,7 @@ export default async function ProductPage({ params }: PageProps) {
                     )}
 
                     {specs.length > 0 && (
-                        <dl className="mt-6 divide-y divide-border overflow-hidden rounded-xl border border-border text-sm">
+                        <dl className="mt-6 divide-y divide-border overflow-hidden rounded-[20px] border border-border text-sm">
                             {specs.map((spec) => (
                                 <div
                                     key={spec.label}
@@ -313,7 +317,7 @@ export default async function ProductPage({ params }: PageProps) {
 
             {relatedSerialized.length > 0 && (
                 <aside className="mt-20 border-t border-border pt-10">
-                    <h2 className="mb-6 text-xl font-semibold tracking-tight">
+                    <h2 className="mb-6 font-display text-xl tracking-tight">
                         Produits similaires
                     </h2>
                     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
