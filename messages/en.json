@@ -1,0 +1,158 @@
+{
+    "nav": {
+        "main": "Main navigation",
+        "shop": "Shop",
+        "blog": "Blog",
+        "about": "About",
+        "faq": "FAQ",
+        "contact": "Contact",
+        "cartAriaEmpty": "Cart, empty",
+        "cartAriaWithItems": "Cart, {count, plural, one {# item} other {# items}}"
+    },
+    "footer": {
+        "copyright": "© {year} {siteName}",
+        "about": "About",
+        "faq": "FAQ",
+        "returns": "Returns policy",
+        "shipping": "Shipping",
+        "terms": "Terms of sale",
+        "contact": "Contact"
+    },
+    "common": {
+        "conditionNew": "New",
+        "conditionUsed": "Used",
+        "conditionRefurbished": "Refurbished"
+    },
+    "home": {
+        "heroEyebrow": "European shipping container marketplace",
+        "ctaShop": "Browse the shop",
+        "ctaContact": "Contact us",
+        "searchPlaceholder": "Search for a container (office, pool, 20ft...)",
+        "searchCta": "Search",
+        "statsProducts": "{count} containers listed",
+        "statsCategories": "{count} categories",
+        "statsYears": "20+ years of experience",
+        "categoriesEyebrow": "Catalog",
+        "categoriesTitle": "Our categories",
+        "categoriesSubtitle": "From standard shipping containers to modular living spaces, find the right fit for your project.",
+        "processEyebrow": "Our process",
+        "processSubtitle": "From selection to delivery, in three steps.",
+        "productsEyebrow": "New arrivals",
+        "productsTitle": "Latest additions",
+        "productsSubtitle": "Recently listed containers.",
+        "productsCta": "Full catalog",
+        "productsEmpty": "The catalog is coming soon.",
+        "trustEyebrow": "Our commitments",
+        "trustNewUsed": "New & used",
+        "trustNewUsedDesc": "New or refurbished containers, inspected before delivery.",
+        "trustSizes": "15 & 20 feet",
+        "trustSizesDesc": "All standard sizes, for storage as well as living spaces.",
+        "trustDelivery": "Delivery & transport",
+        "trustDeliveryDesc": "Shipping arranged wherever your project takes you.",
+        "deliveryEyebrow": "Coverage",
+        "deliveryZones": ["France", "Belgium", "Germany", "Spain", "Luxembourg"],
+        "blogEyebrow": "Latest news",
+        "blogTitle": "Latest news",
+        "blogCta": "Visit the blog",
+        "contactEyebrow": "Contact",
+        "contactTitle": "Got a container project?",
+        "contactSubtitle": "Our team guides you from choosing your container to delivery."
+    },
+    "shop": {},
+    "product": {},
+    "cart": {},
+    "checkout": {},
+    "blog": {},
+    "order": {},
+    "contact": {
+        "title": "Contact",
+        "intro": "A question about a container, an ongoing order, or a custom project? Our team is here to help.",
+        "email": "Email",
+        "phone": "Phone",
+        "address": "Address"
+    },
+    "about": {
+        "eyebrow": "Over 20 years in shipping containers",
+        "title": "Containers shaped around what you actually need",
+        "intro": "Euro Container Market started from a simple observation: the standard ISO shipping container, built for freight, is also one of the sturdiest, fastest-to-deploy, and cheapest-per-square-meter structures around — provided you know how to source it, inspect it, and sometimes rebuild it. That's the trade we've been in for over twenty years.",
+        "storyTitle": "Our story",
+        "storyBody1": "It began with reselling used shipping containers coming off the major Europe–Asia freight lines: units built to take years of port handling, retired by shipping lines long before the end of their useful life. We built our sourcing network around those flows, working directly with port depots in France, Belgium, and Germany.",
+        "storyBody2": "Over time, demand shifted: our customers didn't just want storage anymore — they wanted to live, work, or host in a container. We built out a conversion workshop — insulation, wiring, openings, plumbing — to deliver turnkey office, bar, pool, and mobile-home containers, while holding every unit, new or used, to the same inspection standard before it goes live in the catalog.",
+        "statsIntro": "Today",
+        "valuesTitle": "What we stand for",
+        "valuesSubtitle": "The part that doesn't change, whatever the container.",
+        "values": [
+            {
+                "title": "Systematic inspection",
+                "body": "Every container, new or used, is inspected (structure, watertightness, flooring) before it joins the catalog — no listing goes live without this step."
+            },
+            {
+                "title": "Transparent pricing",
+                "body": "The listed price includes the inspected container; delivery costs are shown before you confirm your order, never after."
+            },
+            {
+                "title": "Delivery across Europe",
+                "body": "Transport arranged to France, Belgium, Germany, Spain, and Luxembourg, with an estimated lead time given at checkout."
+            },
+            {
+                "title": "Technical guidance",
+                "body": "Our team advises on container choice, dimensions, and conversion options before you buy."
+            }
+        ],
+        "processTitle": "How it works",
+        "process": [
+            {
+                "title": "Choose",
+                "body": "Browse the catalog by size (15, 20, 40 feet) or by use (storage, office, pool, bar, living space)."
+            },
+            {
+                "title": "Configure",
+                "body": "For converted containers, talk to our team about the finishes and options specific to your project."
+            },
+            {
+                "title": "Receive",
+                "body": "Delivery arranged to the address of your choice, with a confirmed slot before shipping."
+            }
+        ],
+        "ctaTitle": "Got a project in mind?",
+        "ctaBody": "Browse the catalog or talk to our team directly."
+    },
+    "faq": {
+        "title": "Frequently asked questions",
+        "intro": "Answers to the most common questions about our containers, delivery, and orders.",
+        "items": [
+            {
+                "question": "What's the difference between a new and a used container?",
+                "answer": "A new container has never been used for maritime shipping. A used container has been in service but is always inspected and refurbished before sale."
+            },
+            {
+                "question": "Do you deliver across Europe?",
+                "answer": "Yes, we arrange delivery to most European countries. Lead time and cost depend on the destination and are shown before you confirm your order."
+            },
+            {
+                "question": "Can I have a container customized (windows, insulation, electricity)?",
+                "answer": "Yes, we offer already-converted containers (office, bar, pool, home) and can look into specific customization requests."
+            },
+            {
+                "question": "What are the delivery lead times?",
+                "answer": "Lead times vary depending on the container type, availability, and destination. An accurate estimate is provided when you place your order."
+            },
+            {
+                "question": "Do you offer container rental?",
+                "answer": "Get in touch with our team to discuss rental options suited to your project and its duration."
+            }
+        ]
+    },
+    "returns": {
+        "title": "Returns policy",
+        "body": "Every container is inspected before shipping. If you notice an issue on delivery, contact us within 48 hours with photos: we'll review a return, exchange, or other resolution based on the situation."
+    },
+    "shipping": {
+        "title": "Shipping",
+        "body": "Transport is arranged by us to the destination given at checkout. Delivery times and costs depend on the container type, quantity, and location, and are shown before you confirm your order."
+    },
+    "terms": {
+        "title": "Terms of sale",
+        "body": "These terms govern container sales made through this site. For any question about an ongoing order or these terms, our team is available to help."
+    }
+}

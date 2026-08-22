@@ -1,0 +1,29 @@
+import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { getSiteSettings } from "@/app/(admin)/dashboard/settings/actions";
+
+export async function generateMetadata(): Promise<Metadata> {
+    const [t, settings] = await Promise.all([
+        getTranslations("terms"),
+        getSiteSettings(),
+    ]);
+    return {
+        title: `${t("title")} — ${settings.siteName}`,
+        robots: { index: true, follow: true },
+    };
+}
+
+export default async function TermsPage() {
+    const t = await getTranslations("terms");
+
+    return (
+        <section className="mx-auto max-w-3xl px-4 py-14 sm:py-20">
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                {t("title")}
+            </h1>
+            <p className="mt-4 leading-relaxed text-muted-foreground text-pretty">
+                {t("body")}
+            </p>
+        </section>
+    );
+}

@@ -1,0 +1,158 @@
+{
+    "nav": {
+        "main": "Navigation principale",
+        "shop": "Boutique",
+        "blog": "Blog",
+        "about": "À propos",
+        "faq": "FAQ",
+        "contact": "Contact",
+        "cartAriaEmpty": "Panier, vide",
+        "cartAriaWithItems": "Panier, {count, plural, one {# article} other {# articles}}"
+    },
+    "footer": {
+        "copyright": "© {year} {siteName}",
+        "about": "À propos",
+        "faq": "FAQ",
+        "returns": "Politique de retours",
+        "shipping": "Livraison",
+        "terms": "CGV",
+        "contact": "Contact"
+    },
+    "common": {
+        "conditionNew": "Neuf",
+        "conditionUsed": "Occasion",
+        "conditionRefurbished": "Reconditionné"
+    },
+    "home": {
+        "heroEyebrow": "Marché européen du conteneur maritime",
+        "ctaShop": "Voir la boutique",
+        "ctaContact": "Nous contacter",
+        "searchPlaceholder": "Rechercher un conteneur (bureau, piscine, 20 pieds...)",
+        "searchCta": "Rechercher",
+        "statsProducts": "{count} conteneurs référencés",
+        "statsCategories": "{count} catégories",
+        "statsYears": "20+ ans d'expérience",
+        "categoriesEyebrow": "Catalogue",
+        "categoriesTitle": "Nos catégories",
+        "categoriesSubtitle": "Du conteneur maritime standard à l'habitat modulaire, trouvez la solution adaptée à votre projet.",
+        "processEyebrow": "Notre méthode",
+        "processSubtitle": "De la sélection à la livraison, un parcours en trois étapes.",
+        "productsEyebrow": "Nouveautés",
+        "productsTitle": "Derniers ajouts",
+        "productsSubtitle": "Les conteneurs récemment mis en ligne.",
+        "productsCta": "Tout le catalogue",
+        "productsEmpty": "Le catalogue arrive bientôt.",
+        "trustEyebrow": "Nos engagements",
+        "trustNewUsed": "Neuf & occasion",
+        "trustNewUsedDesc": "Conteneurs neufs ou reconditionnés, contrôlés avant livraison.",
+        "trustSizes": "15 et 20 pieds",
+        "trustSizesDesc": "Toutes les tailles standards, pour le stockage comme l'habitat.",
+        "trustDelivery": "Livraison & transport",
+        "trustDeliveryDesc": "Acheminement organisé partout où votre projet vous mène.",
+        "deliveryEyebrow": "Couverture",
+        "deliveryZones": ["France", "Belgique", "Allemagne", "Espagne", "Luxembourg"],
+        "blogEyebrow": "Actualités",
+        "blogTitle": "Actualités",
+        "blogCta": "Voir le blog",
+        "contactEyebrow": "Contact",
+        "contactTitle": "Un projet de conteneur ?",
+        "contactSubtitle": "Notre équipe vous accompagne du choix du conteneur à la livraison."
+    },
+    "shop": {},
+    "product": {},
+    "cart": {},
+    "checkout": {},
+    "blog": {},
+    "order": {},
+    "contact": {
+        "title": "Contact",
+        "intro": "Une question sur un conteneur, une commande en cours ou un projet sur mesure ? Notre équipe vous répond.",
+        "email": "Email",
+        "phone": "Téléphone",
+        "address": "Adresse"
+    },
+    "about": {
+        "eyebrow": "Depuis plus de 20 ans dans le conteneur maritime",
+        "title": "Des conteneurs qui prennent forme selon vos besoins",
+        "intro": "Euro Container Market est né d'un constat simple : le conteneur maritime standard ISO, conçu pour le transport, est aussi l'une des structures les plus solides, les plus rapides à déployer et les moins chères au mètre carré qui existent — à condition de savoir le sélectionner, le contrôler et parfois le transformer. C'est ce métier que nous exerçons depuis plus de vingt ans.",
+        "storyTitle": "Notre histoire",
+        "storyBody1": "Tout a commencé par la revente de conteneurs maritimes d'occasion issus des grandes lignes de fret Europe–Asie : des unités increvables, conçues pour encaisser des années de manutention portuaire, mais que les armateurs retirent du service bien avant la fin de leur vie utile. Nous avons construit notre réseau de sourcing autour de ces flux, directement auprès de dépôts portuaires en France, en Belgique et en Allemagne.",
+        "storyBody2": "Avec le temps, la demande a évolué : nos clients ne voulaient plus seulement stocker, mais aussi habiter, travailler ou recevoir dans un conteneur. Nous avons développé un pôle transformation — isolation, électricité, ouvertures, sanitaires — pour livrer des conteneurs bureau, bar, piscine ou mobile-home clés en main, tout en gardant le même standard de contrôle qualité sur chaque unité, neuve ou d'occasion, avant sa mise en catalogue.",
+        "statsIntro": "Aujourd'hui",
+        "valuesTitle": "Nos engagements",
+        "valuesSubtitle": "Ce qui ne change pas, quel que soit le conteneur.",
+        "values": [
+            {
+                "title": "Contrôle systématique",
+                "body": "Chaque conteneur, neuf ou d'occasion, est inspecté (structure, étanchéité, planchers) avant de rejoindre le catalogue — aucune fiche n'est mise en ligne sans cette étape."
+            },
+            {
+                "title": "Prix transparents",
+                "body": "Le prix affiché inclut le conteneur inspecté ; les frais de livraison sont communiqués avant validation de la commande, jamais après."
+            },
+            {
+                "title": "Livraison en Europe",
+                "body": "Transport organisé vers la France, la Belgique, l'Allemagne, l'Espagne et le Luxembourg, avec un délai estimé communiqué dès la commande."
+            },
+            {
+                "title": "Accompagnement technique",
+                "body": "Notre équipe conseille sur le choix du conteneur, ses dimensions et ses options de transformation avant tout achat."
+            }
+        ],
+        "processTitle": "Comment ça marche",
+        "process": [
+            {
+                "title": "Choisissez",
+                "body": "Parcourez le catalogue par taille (15, 20, 40 pieds) ou par usage (stockage, bureau, piscine, bar, habitation)."
+            },
+            {
+                "title": "Configurez",
+                "body": "Pour les conteneurs modifiés, discutez avec notre équipe des finitions et options spécifiques à votre projet."
+            },
+            {
+                "title": "Recevez",
+                "body": "Livraison organisée à l'adresse de votre choix, avec un créneau confirmé avant expédition."
+            }
+        ],
+        "ctaTitle": "Un projet en tête ?",
+        "ctaBody": "Parcourez le catalogue ou parlez-en directement à notre équipe."
+    },
+    "faq": {
+        "title": "Questions fréquentes",
+        "intro": "Les réponses aux questions les plus courantes sur nos conteneurs, la livraison et les commandes.",
+        "items": [
+            {
+                "question": "Quelle est la différence entre un conteneur neuf et un conteneur d'occasion ?",
+                "answer": "Un conteneur neuf n'a jamais servi au transport maritime. Un conteneur d'occasion a déjà été utilisé mais est systématiquement inspecté et remis en état avant la vente."
+            },
+            {
+                "question": "Livrez-vous partout en Europe ?",
+                "answer": "Oui, nous organisons la livraison dans la plupart des pays européens. Le délai et le coût dépendent de la destination et sont indiqués avant validation de la commande."
+            },
+            {
+                "question": "Puis-je faire modifier un conteneur (fenêtres, isolation, électricité) ?",
+                "answer": "Oui, nous proposons des conteneurs déjà modifiés (bureau, bar, piscine, logement) et pouvons étudier des demandes de personnalisation spécifiques."
+            },
+            {
+                "question": "Quels sont les délais de livraison ?",
+                "answer": "Les délais varient selon le type de conteneur, sa disponibilité et la destination. Une estimation précise est communiquée lors de la commande."
+            },
+            {
+                "question": "Proposez-vous la location de conteneurs ?",
+                "answer": "Contactez notre équipe pour étudier les options de location adaptées à votre projet et sa durée."
+            }
+        ]
+    },
+    "returns": {
+        "title": "Politique de retours",
+        "body": "Chaque conteneur est inspecté avant expédition. En cas de non-conformité constatée à la livraison, contactez-nous sous 48 heures avec des photos à l'appui : nous étudierons un retour, un échange ou un geste commercial selon la situation."
+    },
+    "shipping": {
+        "title": "Livraison",
+        "body": "Le transport est organisé par nos soins vers la destination indiquée à la commande. Les délais et frais de livraison dépendent du type de conteneur, de la quantité et de la localisation, et sont communiqués avant validation de la commande."
+    },
+    "terms": {
+        "title": "Conditions générales de vente",
+        "body": "Les présentes conditions régissent les ventes de conteneurs réalisées sur ce site. Pour toute question relative à une commande en cours ou à ces conditions, notre équipe reste à votre disposition."
+    }
+}

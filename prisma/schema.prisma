@@ -1,0 +1,684 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  EDITOR
+  CLIENT
+}
+
+enum PostStatus {
+  DRAFT
+  REVIEW
+  PUBLISHED
+}
+
+enum ProductStatus {
+  DRAFT
+  REVIEW
+  PUBLISHED
+}
+
+enum ProductCondition {
+  NEW
+  USED
+  REFURBISHED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum ShippingStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum ShippingMethod {
+  DELIVERY
+  PICKUP
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum CouponType {
+  PERCENTAGE
+  FIXED
+  FREE_SHIPPING
+}
+
+enum WebhookEvent {
+  ORDER_CREATED
+  ORDER_PAID
+  ORDER_SHIPPED
+  POST_PUBLISHED
+  PRODUCT_LOW_STOCK
+}
+
+enum PageType {
+  HOME
+  BLOG
+  SHOP
+  RETURNS
+  SHIPPING
+  TERMS
+}
+
+// ─── Better Auth ──────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  role          Role      @default(CLIENT)
+  banned        Boolean?
+  banReason     String?
+  banExpires    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions Session[]
+  accounts Account[]
+  posts    Post[]
+  orders   Order[]
+  reviews  ProductReview[]
+  comments Comment[]
+}
+
+model Session {
+  id        String   @id
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                    String    @id
+  userId                String
+  providerId            String
+  accountId             String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// ─── Site Settings ────────────────────────────────────────────────────────────
+
+model SiteSettings {
+  id                  String   @id @default("singleton")
+  siteName            String   @default("NextPress")
+  logo                String?
+  favicon             String?
+  description         String?
+  slogan              String?
+  contactEmail        String?
+  phone               String?
+  address             String?
+  socialTwitter       String?
+  socialFacebook      String?
+  socialInstagram     String?
+  socialLinkedin      String?
+  socialYoutube       String?
+  socialTiktok        String?
+  currency            String   @default("XOF")
+  defaultLanguage     String   @default("fr")
+  maintenanceMode     Boolean  @default(false)
+  maintenanceMessage  String?
+  seoTitle            String?
+  seoDescription      String?
+  gtmId               String?
+  ga4Id               String?
+  metaPixelId         String?
+  tiktokPixelId       String?
+  metaCapiToken       String?
+  googleEnhancedConv  String?
+  deeplApiKey         String?
+  cloudinaryCloudName String?
+  cloudinaryApiKey    String?
+  cloudinaryApiSecret String?
+  stripePublicKey     String?
+  stripeSecretKey     String?
+  stripeWebhookSecret String?
+  feexpayPublicKey    String?
+  feexpaySecretKey    String?
+  /// Moyens de paiement manuels, toujours proposés en plus des prestataires.
+  codEnabled          Boolean  @default(true)
+  bankTransferEnabled Boolean  @default(false)
+  bankTransferDetails String?
+  mobileMoneyEnabled  Boolean  @default(false)
+  mobileMoneyDetails  String?
+  robotsTxt           String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+// ─── Media ────────────────────────────────────────────────────────────────────
+
+model Media {
+  id        String    @id @default(cuid())
+  publicId  String    @unique
+  url       String
+  type      MediaType @default(IMAGE)
+  name      String
+  size      Int?
+  width     Int?
+  height    Int?
+  format    String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+// ─── Post Taxonomy ────────────────────────────────────────────────────────────
+
+model PostCategory {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  parentId    String?
+  seoTitle    String?
+  seoDesc     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  parent       PostCategory?             @relation("PostCategoryChildren", fields: [parentId], references: [id])
+  children     PostCategory[]            @relation("PostCategoryChildren")
+  posts        PostsOnCategories[]
+  translations PostCategoryTranslation[]
+}
+
+model PostCategoryTranslation {
+  id          String   @id @default(cuid())
+  categoryId  String
+  locale      String
+  name        String
+  description String?
+  slug        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category PostCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, locale])
+}
+
+model PostTag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  posts        PostsOnTags[]
+  translations PostTagTranslation[]
+}
+
+model PostTagTranslation {
+  id        String   @id @default(cuid())
+  tagId     String
+  locale    String
+  name      String
+  slug      String
+  createdAt DateTime @default(now())
+
+  tag PostTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([tagId, locale])
+}
+
+// ─── Posts ────────────────────────────────────────────────────────────────────
+
+model Post {
+  id             String     @id @default(cuid())
+  title          String
+  slug           String     @unique
+  excerpt        String?
+  content        String?    @db.Text
+  featuredImage  String?
+  status         PostStatus @default(DRAFT)
+  authorId       String
+  seoTitle       String?
+  seoDescription String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  publishedAt    DateTime?
+
+  author       User                @relation(fields: [authorId], references: [id])
+  categories   PostsOnCategories[]
+  tags         PostsOnTags[]
+  comments     Comment[]
+  revisions    PostRevision[]
+  translations PostTranslation[]
+}
+
+model PostRevision {
+  id        String   @id @default(cuid())
+  postId    String
+  title     String
+  content   String?  @db.Text
+  excerpt   String?
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model PostTranslation {
+  id        String   @id @default(cuid())
+  postId    String
+  locale    String
+  title     String
+  slug      String
+  excerpt   String?
+  content   String?  @db.Text
+  seoTitle  String?
+  seoDesc   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, locale])
+}
+
+model PostsOnCategories {
+  postId     String
+  categoryId String
+
+  post     Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  category PostCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([postId, categoryId])
+}
+
+model PostsOnTags {
+  postId String
+  tagId  String
+
+  post Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  PostTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+}
+
+// ─── Product Taxonomy ─────────────────────────────────────────────────────────
+
+model ProductCategory {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  parentId    String?
+  seoTitle    String?
+  seoDesc     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  parent       ProductCategory?             @relation("ProductCategoryChildren", fields: [parentId], references: [id])
+  children     ProductCategory[]            @relation("ProductCategoryChildren")
+  products     ProductsOnCategories[]
+  translations ProductCategoryTranslation[]
+}
+
+model ProductCategoryTranslation {
+  id          String   @id @default(cuid())
+  categoryId  String
+  locale      String
+  name        String
+  description String?
+  slug        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category ProductCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, locale])
+}
+
+model ProductTag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  products     ProductsOnTags[]
+  translations ProductTagTranslation[]
+}
+
+model ProductTagTranslation {
+  id        String   @id @default(cuid())
+  tagId     String
+  locale    String
+  name      String
+  slug      String
+  createdAt DateTime @default(now())
+
+  tag ProductTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([tagId, locale])
+}
+
+// ─── Products ─────────────────────────────────────────────────────────────────
+
+model Product {
+  id                    String           @id @default(cuid())
+  name                  String
+  slug                  String           @unique
+  description           String?          @db.Text
+  images                String[]
+  price                 Decimal          @db.Decimal(10, 2)
+  promoPrice            Decimal?         @db.Decimal(10, 2)
+  stock                 Int              @default(0)
+  lowStockThreshold     Int              @default(5)
+  weight                Decimal?         @db.Decimal(8, 3)
+  sku                   String?          @unique
+  mpn                   String?
+  gtin                  String?
+  condition             ProductCondition @default(NEW)
+  googleProductCategory String?
+  status                ProductStatus    @default(DRAFT)
+  seoTitle              String?
+  seoDescription        String?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  publishedAt           DateTime?
+
+  categories   ProductsOnCategories[]
+  tags         ProductsOnTags[]
+  variants     ProductVariant[]
+  reviews      ProductReview[]
+  translations ProductTranslation[]
+  orderItems   OrderItem[]
+}
+
+model ProductVariant {
+  id        String   @id @default(cuid())
+  productId String
+  name      String
+  value     String
+  stock     Int      @default(0)
+  price     Decimal? @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model ProductTranslation {
+  id          String   @id @default(cuid())
+  productId   String
+  locale      String
+  name        String
+  slug        String
+  description String?  @db.Text
+  seoTitle    String?
+  seoDesc     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, locale])
+}
+
+model ProductsOnCategories {
+  productId  String
+  categoryId String
+
+  product  Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category ProductCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([productId, categoryId])
+}
+
+model ProductsOnTags {
+  productId String
+  tagId     String
+
+  product Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  tag     ProductTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([productId, tagId])
+}
+
+model ProductReview {
+  id        String       @id @default(cuid())
+  productId String
+  userId    String
+  rating    Int
+  comment   String?
+  status    ReviewStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Orders ───────────────────────────────────────────────────────────────────
+
+model Order {
+  id              String         @id @default(cuid())
+  orderNumber     String         @unique @default(cuid())
+  userId          String?
+  customerEmail   String
+  customerName    String
+  customerPhone   String?
+  shippingAddress Json
+  subtotal        Decimal        @db.Decimal(10, 2)
+  shippingCost    Decimal        @default(0) @db.Decimal(10, 2)
+  discount        Decimal        @default(0) @db.Decimal(10, 2)
+  total           Decimal        @db.Decimal(10, 2)
+  currency        String         @default("XOF")
+  paymentStatus   PaymentStatus  @default(PENDING)
+  paymentMethod   String?
+  paymentIntentId String?
+  shippingStatus  ShippingStatus @default(PENDING)
+  shippingMethod  ShippingMethod @default(DELIVERY)
+  shippingZoneId  String?
+  pickupPointId   String?
+  trackingNumber  String?
+  notes           String?
+  couponId        String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  user         User?         @relation(fields: [userId], references: [id])
+  coupon       Coupon?       @relation(fields: [couponId], references: [id])
+  shippingZone ShippingZone? @relation(fields: [shippingZoneId], references: [id])
+  pickupPoint  PickupPoint?  @relation(fields: [pickupPointId], references: [id])
+  items        OrderItem[]
+}
+
+// ─── Livraison ────────────────────────────────────────────────────────────────
+
+model ShippingZone {
+  id            String   @id @default(cuid())
+  name          String
+  price         Decimal  @db.Decimal(10, 2)
+  /// Au-delà de ce montant de commande, la livraison est offerte.
+  freeAbove     Decimal? @db.Decimal(10, 2)
+  estimatedDays String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  orders Order[]
+}
+
+model PickupPoint {
+  id        String   @id @default(cuid())
+  name      String
+  /// Sert aussi à construire l'iframe Google Maps : aucune URL n'est stockée.
+  address   String
+  details   String?
+  hours     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders Order[]
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String
+  variantId String?
+  name      String
+  price     Decimal @db.Decimal(10, 2)
+  quantity  Int
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+}
+
+// ─── Coupons ──────────────────────────────────────────────────────────────────
+
+model Coupon {
+  id          String     @id @default(cuid())
+  code        String     @unique
+  type        CouponType
+  value       Decimal    @db.Decimal(10, 2)
+  minAmount   Decimal?   @db.Decimal(10, 2)
+  maxUses     Int?
+  usedCount   Int        @default(0)
+  startsAt    DateTime?
+  expiresAt   DateTime?
+  isActive    Boolean    @default(true)
+  productIds  String[]
+  categoryIds String[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  orders Order[]
+}
+
+// ─── Comments ─────────────────────────────────────────────────────────────────
+
+model Comment {
+  id         String        @id @default(cuid())
+  postId     String
+  userId     String?
+  guestName  String?
+  guestEmail String?
+  content    String
+  status     CommentStatus @default(PENDING)
+  parentId   String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  post    Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user    User?     @relation(fields: [userId], references: [id])
+  parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies Comment[] @relation("CommentReplies")
+}
+
+// ─── Static Pages ─────────────────────────────────────────────────────────────
+
+model StaticPage {
+  id        String   @id @default(cuid())
+  type      PageType @unique
+  title     String
+  content   String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Webhooks ─────────────────────────────────────────────────────────────────
+
+model Webhook {
+  id        String       @id @default(cuid())
+  url       String
+  event     WebhookEvent
+  secret    String?
+  isActive  Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  logs WebhookLog[]
+}
+
+model WebhookLog {
+  id        String   @id @default(cuid())
+  webhookId String
+  event     String
+  payload   Json
+  status    Int
+  error     String?
+  sentAt    DateTime @default(now())
+
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+}
+
+// ─── GMC Feed Log ─────────────────────────────────────────────────────────────
+
+model GmcFeedLog {
+  id           String   @id @default(cuid())
+  productCount Int
+  errors       String[]
+  generatedAt  DateTime @default(now())
+}
+
+// ─── A/B Testing ──────────────────────────────────────────────────────────────
+
+model AbTest {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  isActive  Boolean  @default(true)
+  variants  Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
