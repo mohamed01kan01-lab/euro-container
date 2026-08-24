@@ -7,6 +7,7 @@ import { Logo } from "@/components/public/logo";
 import { LocaleSwitcher } from "@/components/public/locale-switcher";
 import { MobileNav } from "@/components/public/mobile-nav";
 import { HeaderSearch } from "@/components/public/header-search";
+import { AccountMenu } from "@/components/public/account-menu";
 
 export async function SiteHeader() {
     const [settings, cartCount, tNav, tHome, locale] = await Promise.all([
@@ -55,6 +56,13 @@ export async function SiteHeader() {
                         action={shopHref}
                         placeholder={tHome("searchPlaceholder")}
                         menuLabel={tHome("searchCta")}
+                    />
+
+                    <AccountMenu
+                        loginAria={tNav("loginAria")}
+                        accountAria={tNav("accountAria")}
+                        dashboardLabel={tNav("dashboard")}
+                        logoutLabel={tNav("logout")}
                     />
 
                     {/* Desktop : icône discrète. */}

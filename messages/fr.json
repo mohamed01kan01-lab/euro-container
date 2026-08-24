@@ -7,7 +7,11 @@
         "faq": "FAQ",
         "contact": "Contact",
         "cartAriaEmpty": "Panier, vide",
-        "cartAriaWithItems": "Panier, {count, plural, one {# article} other {# articles}}"
+        "cartAriaWithItems": "Panier, {count, plural, one {# article} other {# articles}}",
+        "loginAria": "Se connecter",
+        "accountAria": "Mon compte",
+        "dashboard": "Tableau de bord",
+        "logout": "Se déconnecter"
     },
     "footer": {
         "copyright": "© {year} {siteName}",
