@@ -80,7 +80,17 @@
         "intro": "A question about a container, an ongoing order, or a custom project? Our team is here to help.",
         "email": "Email",
         "phone": "Phone",
-        "address": "Address"
+        "address": "Address",
+        "formTitle": "Send us a message",
+        "formName": "Name",
+        "formEmail": "Email",
+        "formSubject": "Subject",
+        "formSubjectOptional": "Subject (optional)",
+        "formMessage": "Message",
+        "formSubmit": "Send message",
+        "formSuccessTitle": "Message sent!",
+        "formSuccessBody": "Thanks, we'll get back to you as soon as possible.",
+        "formErrorGeneric": "Sending failed. Please try again or reach us directly by email."
     },
     "about": {
         "eyebrow": "Over 20 years in shipping containers",

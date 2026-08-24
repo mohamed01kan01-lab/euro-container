@@ -17,12 +17,14 @@ async function send(payload: {
     to: string;
     subject: string;
     html: string;
+    replyTo?: string;
 }) {
     const { error } = await resend.emails.send({
         from: FROM,
         to: payload.to,
         subject: payload.subject,
         html: payload.html,
+        replyTo: payload.replyTo,
     });
 
     if (error) {
@@ -89,6 +91,33 @@ export async function sendAccountCreatedEmail({
     });
 }
 
+/**
+ * Message du formulaire /contact, envoyé à l'adresse de contact du site avec le
+ * visiteur en reply-to : une réponse directe depuis la boîte mail suffit.
+ */
+export async function sendContactMessageEmail({
+    to,
+    siteName,
+    fromName,
+    fromEmail,
+    subject,
+    message,
+}: {
+    to: string;
+    siteName: string;
+    fromName: string;
+    fromEmail: string;
+    subject: string;
+    message: string;
+}) {
+    await send({
+        to,
+        subject: `[${siteName}] ${subject}`,
+        html: contactMessageHtml({ siteName, fromName, fromEmail, subject, message }),
+        replyTo: fromEmail,
+    });
+}
+
 // ─── Templates ───────────────────────────────────────────────────────────────
 
 function otpHtml(otp: string, type: string) {
@@ -146,6 +175,57 @@ function welcomeHtml(name: string) {
             NextPress — L'alternative moderne à WordPress.<br>
             Liberté totale sur votre frontend, zéro thème payant.
           </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+function contactMessageHtml({
+    siteName,
+    fromName,
+    fromEmail,
+    subject,
+    message,
+}: {
+    siteName: string;
+    fromName: string;
+    fromEmail: string;
+    subject: string;
+    message: string;
+}) {
+    const escape = (value: string) =>
+        value
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+
+    return `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#F8FAFC;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8FAFC;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;padding:48px 40px;box-shadow:0 1px 3px rgba(0,0,0,.08);">
+        <tr><td style="padding-bottom:32px;border-bottom:1px solid #F1F5F9;">
+          <p style="margin:0;font-size:22px;font-weight:700;color:#0F172A;">${escape(siteName)}</p>
+        </td></tr>
+        <tr><td style="padding-top:32px;">
+          <p style="margin:0 0 8px;font-size:18px;font-weight:600;color:#0F172A;">Nouveau message via le formulaire de contact</p>
+          <p style="margin:0 0 24px;font-size:15px;color:#64748B;line-height:1.6;">${escape(subject)}</p>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:20px;margin-bottom:24px;">
+            <tr><td style="padding-bottom:12px;">
+              <p style="margin:0 0 4px;font-size:12px;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;">De</p>
+              <p style="margin:0;font-size:15px;color:#0F172A;font-weight:600;">${escape(fromName)} &lt;${escape(fromEmail)}&gt;</p>
+            </td></tr>
+          </table>
+
+          <p style="margin:0;font-size:15px;color:#0F172A;line-height:1.7;white-space:pre-wrap;">${escape(message)}</p>
+
+          <p style="margin:28px 0 0;font-size:13px;color:#94A3B8;line-height:1.6;">Répondre à cet email revient directement à ${escape(fromEmail)}.</p>
         </td></tr>
       </table>
     </td></tr>

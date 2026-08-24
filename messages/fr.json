@@ -80,7 +80,17 @@
         "intro": "Une question sur un conteneur, une commande en cours ou un projet sur mesure ? Notre équipe vous répond.",
         "email": "Email",
         "phone": "Téléphone",
-        "address": "Adresse"
+        "address": "Adresse",
+        "formTitle": "Envoyez-nous un message",
+        "formName": "Nom",
+        "formEmail": "Email",
+        "formSubject": "Sujet",
+        "formSubjectOptional": "Sujet (optionnel)",
+        "formMessage": "Message",
+        "formSubmit": "Envoyer le message",
+        "formSuccessTitle": "Message envoyé !",
+        "formSuccessBody": "Merci, nous vous répondrons dès que possible.",
+        "formErrorGeneric": "L'envoi a échoué. Réessayez ou contactez-nous directement par email."
     },
     "about": {
         "eyebrow": "Depuis plus de 20 ans dans le conteneur maritime",

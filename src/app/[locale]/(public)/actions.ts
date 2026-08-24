@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import * as z from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getSiteSettings } from "@/app/(admin)/dashboard/settings/actions";
+import { sendContactMessageEmail } from "@/lib/email";
 
 /**
  * Endpoints publics de dépôt. À terme, ces deux actions ont vocation à devenir
@@ -156,4 +158,43 @@ export async function submitReview(input: ReviewInput) {
 
     revalidatePath(`/product/${product.slug}`);
     revalidatePath("/dashboard/reviews");
+}
+
+// ─── Contact ──────────────────────────────────────────────────────────────────
+
+const contactSchema = z.object({
+    name: z.string().trim().min(2, { message: "Indiquez votre nom." }),
+    email: z.email({ error: "Adresse email invalide." }),
+    subject: z.string().trim().max(200).optional(),
+    message: z
+        .string()
+        .trim()
+        .min(10, { message: "Votre message est trop court." })
+        .max(5000, { message: "Votre message est trop long." }),
+});
+
+export type ContactInput = z.infer<typeof contactSchema>;
+
+export async function submitContactMessage(input: ContactInput) {
+    const parsed = contactSchema.safeParse(input);
+    if (!parsed.success) {
+        throw new Error(parsed.error.issues[0]?.message ?? "Message invalide.");
+    }
+    const data = parsed.data;
+
+    const settings = await getSiteSettings();
+    if (!settings.contactEmail) {
+        throw new Error(
+            "Aucune adresse de contact n'est configurée pour le moment.",
+        );
+    }
+
+    await sendContactMessageEmail({
+        to: settings.contactEmail,
+        siteName: settings.siteName,
+        fromName: data.name,
+        fromEmail: data.email,
+        subject: data.subject || "Nouveau message depuis le site",
+        message: data.message,
+    });
 }
