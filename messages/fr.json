@@ -11,7 +11,9 @@
         "loginAria": "Se connecter",
         "accountAria": "Mon compte",
         "dashboard": "Tableau de bord",
-        "logout": "Se déconnecter"
+        "logout": "Se déconnecter",
+        "themeLight": "Passer en mode clair",
+        "themeDark": "Passer en mode sombre"
     },
     "footer": {
         "copyright": "© {year} {siteName}",

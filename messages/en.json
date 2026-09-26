@@ -11,7 +11,9 @@
         "loginAria": "Log in",
         "accountAria": "My account",
         "dashboard": "Dashboard",
-        "logout": "Log out"
+        "logout": "Log out",
+        "themeLight": "Switch to light mode",
+        "themeDark": "Switch to dark mode"
     },
     "footer": {
         "copyright": "© {year} {siteName}",

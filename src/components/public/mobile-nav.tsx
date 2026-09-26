@@ -12,6 +12,7 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet";
 import { LocaleSwitcher } from "@/components/public/locale-switcher";
+import { ThemeToggle } from "@/components/public/theme-toggle";
 
 interface NavLink {
     href: string;
@@ -21,9 +22,11 @@ interface NavLink {
 export function MobileNav({
     links,
     menuLabel,
+    themeLabels,
 }: {
     links: NavLink[];
     menuLabel: string;
+    themeLabels: { lightLabel: string; darkLabel: string };
 }) {
     const [open, setOpen] = useState(false);
 
@@ -55,8 +58,9 @@ export function MobileNav({
                         </Link>
                     ))}
                 </nav>
-                <div className="mt-auto flex justify-center border-t border-border p-4">
+                <div className="mt-auto flex items-center justify-center gap-3 border-t border-border p-4">
                     <LocaleSwitcher />
+                    <ThemeToggle {...themeLabels} />
                 </div>
             </SheetContent>
         </Sheet>

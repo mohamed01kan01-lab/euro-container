@@ -8,6 +8,7 @@ import { LocaleSwitcher } from "@/components/public/locale-switcher";
 import { MobileNav } from "@/components/public/mobile-nav";
 import { HeaderSearch } from "@/components/public/header-search";
 import { AccountMenu } from "@/components/public/account-menu";
+import { ThemeToggle } from "@/components/public/theme-toggle";
 
 export async function SiteHeader() {
     const [settings, cartCount, tNav, tHome, locale] = await Promise.all([
@@ -26,6 +27,11 @@ export async function SiteHeader() {
         { href: "/faq", label: tNav("faq") },
         { href: "/contact", label: tNav("contact") },
     ];
+
+    const themeLabels = {
+        lightLabel: tNav("themeLight"),
+        darkLabel: tNav("themeDark"),
+    };
 
     return (
         <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
@@ -48,8 +54,9 @@ export async function SiteHeader() {
                 </nav>
 
                 <div className="flex items-center gap-1.5">
-                    <div className="hidden md:block">
+                    <div className="hidden items-center gap-1.5 md:flex">
                         <LocaleSwitcher />
+                        <ThemeToggle {...themeLabels} />
                     </div>
 
                     <HeaderSearch
@@ -104,7 +111,11 @@ export async function SiteHeader() {
                         )}
                     </Link>
 
-                    <MobileNav links={navLinks} menuLabel={tNav("main")} />
+                    <MobileNav
+                        links={navLinks}
+                        menuLabel={tNav("main")}
+                        themeLabels={themeLabels}
+                    />
                 </div>
             </div>
         </header>
