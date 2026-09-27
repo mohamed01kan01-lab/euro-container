@@ -2,18 +2,25 @@
 
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
 import * as z from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getCart, writeStoredCart } from "@/lib/cart";
 import { validateCoupon } from "@/lib/coupon";
 import { getSiteSettings } from "@/app/(admin)/dashboard/settings/actions";
-import { availablePaymentMethods, isPaymentMethod } from "@/lib/payment";
+import { availablePaymentMethods } from "@/lib/payment";
+import { generateOrderReference } from "@/lib/order-reference";
+import { defer, startCardPayment } from "@/lib/order-payment";
+import { notifyAdmin, sendOrderReceivedEmail } from "@/lib/order-emails";
 
 const schema = z.object({
-    customerName: z.string().min(2, { message: "Votre nom est requis" }).trim(),
+    checkoutKey: z.uuid(),
+    locale: z.string().max(5).default("fr"),
+    customerName: z.string().trim().min(2, { message: "Votre nom est requis" }),
     customerEmail: z.email({ error: "Email invalide" }),
-    customerPhone: z.string().trim().optional(),
+    customerPhone: z.string().trim().min(6, { message: "Un téléphone est requis pour organiser la livraison" }),
+    company: z.string().trim().optional(),
     shippingMethod: z.enum(["DELIVERY", "PICKUP"]),
     shippingZoneId: z.string().optional(),
     pickupPointId: z.string().optional(),
@@ -22,28 +29,100 @@ const schema = z.object({
     city: z.string().trim().optional(),
     postalCode: z.string().trim().optional(),
     country: z.string().trim().optional(),
-    paymentMethod: z.string(),
-    notes: z.string().trim().optional(),
+    paymentMethod: z.enum(["STRIPE", "BANK_TRANSFER"]),
+    notes: z.string().trim().max(1000).optional(),
 });
 
-export type CheckoutInput = z.infer<typeof schema>;
+export type CheckoutInput = z.input<typeof schema>;
+
+export type PlaceOrderResult =
+    | {
+          ok: true;
+          orderNumber: string;
+          /** Page Stripe vers laquelle rediriger (paiement par carte). */
+          redirectUrl?: string;
+      }
+    | { ok: false; error: string };
+
+class CheckoutError extends Error {}
 
 /**
  * Crée la commande.
  *
  * Rien de ce que le client envoie n'est utilisé pour l'argent : prix, stock,
- * remise et frais de port sont relus en base et recalculés ici. Le client ne
- * choisit que des identifiants.
+ * remise et frais de port sont relus en base et recalculés ici.
+ *
+ * Idempotent : `checkoutKey` est généré une fois par le navigateur. Un double
+ * clic, un rafraîchissement ou un retour arrière depuis Stripe renvoie la
+ * commande déjà créée au lieu d'en créer une seconde.
  */
-export async function placeOrder(
-    input: CheckoutInput,
-): Promise<{ orderNumber: string }> {
+export async function placeOrder(input: CheckoutInput): Promise<PlaceOrderResult> {
     const parsed = schema.safeParse(input);
     if (!parsed.success) {
-        throw new Error(parsed.error.issues[0]?.message ?? "Formulaire invalide.");
+        return { ok: false, error: parsed.error.issues[0]?.message ?? "Formulaire invalide." };
     }
     const data = parsed.data;
 
+    try {
+        const existing = await prisma.order.findUnique({
+            where: { checkoutKey: data.checkoutKey },
+            select: { id: true, orderNumber: true, paymentMethod: true, paymentStatus: true },
+        });
+        if (existing) return resume(existing, data.locale);
+
+        const order = await createOrder(data);
+
+        await writeStoredCart({ items: [] });
+        revalidatePath("/", "layout");
+        revalidatePath("/dashboard/orders");
+
+        if (data.paymentMethod === "BANK_TRANSFER") {
+            defer("email commande reçue", () => sendOrderReceivedEmail(order.id));
+            defer("notif admin commande", () => notifyAdmin(order.id, "NEW_ORDER"));
+            return { ok: true, orderNumber: order.orderNumber };
+        }
+
+        return resume(
+            { ...order, paymentMethod: "STRIPE", paymentStatus: "PENDING" },
+            data.locale,
+        );
+    } catch (err) {
+        if (err instanceof CheckoutError) return { ok: false, error: err.message };
+        // Deux envois simultanés avec la même clé : le second retombe sur la commande du premier.
+        if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+            const existing = await prisma.order.findUnique({
+                where: { checkoutKey: data.checkoutKey },
+                select: { id: true, orderNumber: true, paymentMethod: true, paymentStatus: true },
+            });
+            if (existing) return resume(existing, data.locale);
+        }
+        console.error("[checkout] placeOrder :", err);
+        return { ok: false, error: "La commande n'a pas pu être enregistrée. Réessayez dans un instant." };
+    }
+}
+
+/**
+ * Suite d'une commande existante. Pour la carte, on renvoie vers Stripe ; si
+ * Stripe est indisponible, la commande reste valable et sa page propose de
+ * réessayer ou de payer par virement : le client n'est jamais bloqué.
+ */
+async function resume(
+    order: { id: string; orderNumber: string; paymentMethod: string | null; paymentStatus: string },
+    locale: string,
+): Promise<PlaceOrderResult> {
+    if (order.paymentMethod !== "STRIPE" || order.paymentStatus !== "PENDING") {
+        return { ok: true, orderNumber: order.orderNumber };
+    }
+    try {
+        const redirectUrl = await startCardPayment(order.id, locale);
+        return { ok: true, orderNumber: order.orderNumber, redirectUrl };
+    } catch (err) {
+        console.error("[checkout] Stripe :", err);
+        return { ok: true, orderNumber: order.orderNumber };
+    }
+}
+
+async function createOrder(data: z.output<typeof schema>) {
     const [cart, settings, session] = await Promise.all([
         getCart(),
         getSiteSettings(),
@@ -51,21 +130,10 @@ export async function placeOrder(
     ]);
 
     if (cart.lines.length === 0) {
-        throw new Error("Votre panier est vide.");
+        throw new CheckoutError("Votre panier est vide.");
     }
-
-    // ─── Paiement ─────────────────────────────────────────────────────────────
-    const allowed = availablePaymentMethods(settings);
-    if (
-        !isPaymentMethod(data.paymentMethod) ||
-        !allowed.includes(data.paymentMethod)
-    ) {
-        throw new Error("Ce moyen de paiement n'est pas disponible.");
-    }
-    if (data.paymentMethod === "STRIPE" || data.paymentMethod === "FEEXPAY") {
-        throw new Error(
-            "Le paiement en ligne n'est pas encore actif. Choisissez un autre moyen de paiement.",
-        );
+    if (!availablePaymentMethods(settings).includes(data.paymentMethod)) {
+        throw new CheckoutError("Ce moyen de paiement n'est pas disponible.");
     }
 
     // ─── Livraison ────────────────────────────────────────────────────────────
@@ -75,46 +143,34 @@ export async function placeOrder(
     let addressJson: Record<string, string> = {};
 
     if (data.shippingMethod === "PICKUP") {
-        if (!data.pickupPointId) {
-            throw new Error("Choisissez un point de retrait.");
-        }
+        if (!data.pickupPointId) throw new CheckoutError("Choisissez un point de retrait.");
         const point = await prisma.pickupPoint.findUnique({
             where: { id: data.pickupPointId },
             select: { id: true, isActive: true, name: true, address: true },
         });
         if (!point || !point.isActive) {
-            throw new Error("Ce point de retrait n'est plus disponible.");
+            throw new CheckoutError("Ce point de retrait n'est plus disponible.");
         }
         pickupPointId = point.id;
         addressJson = { pickup: point.name, line1: point.address };
     } else {
-        if (!data.shippingZoneId) {
-            throw new Error("Choisissez un secteur de livraison.");
-        }
+        if (!data.shippingZoneId) throw new CheckoutError("Choisissez un secteur de livraison.");
         const zone = await prisma.shippingZone.findUnique({
             where: { id: data.shippingZoneId },
-            select: {
-                id: true,
-                isActive: true,
-                price: true,
-                freeAbove: true,
-                name: true,
-            },
+            select: { id: true, isActive: true, price: true, freeAbove: true, name: true },
         });
         if (!zone || !zone.isActive) {
-            throw new Error("Ce secteur de livraison n'est plus disponible.");
+            throw new CheckoutError("Ce secteur de livraison n'est plus disponible.");
         }
         if (!data.addressLine1 || !data.city) {
-            throw new Error("Adresse et ville sont requises pour la livraison.");
+            throw new CheckoutError("Adresse et ville sont requises pour la livraison.");
         }
 
         const freeAbove = zone.freeAbove === null ? null : Number(zone.freeAbove);
         // Le seuil de gratuité s'apprécie sur le sous-total après remise.
         const afterDiscount = cart.subtotal - cart.discount;
         shippingCost =
-            freeAbove !== null && afterDiscount >= freeAbove
-                ? 0
-                : Number(zone.price);
+            freeAbove !== null && afterDiscount >= freeAbove ? 0 : Number(zone.price);
 
         shippingZoneId = zone.id;
         addressJson = {
@@ -126,6 +182,7 @@ export async function placeOrder(
             ...(data.country && { country: data.country }),
         };
     }
+    if (data.company) addressJson.company = data.company;
 
     // ─── Coupon : revalidé, jamais repris du panier ───────────────────────────
     let couponId: string | null = null;
@@ -142,52 +199,37 @@ export async function placeOrder(
             discount = result.discount;
             if (result.freeShipping) shippingCost = 0;
         } catch (err) {
-            throw new Error(
-                err instanceof Error
-                    ? `Code promo : ${err.message}`
-                    : "Code promo invalide.",
+            throw new CheckoutError(
+                err instanceof Error ? `Code promo : ${err.message}` : "Code promo invalide.",
             );
         }
     }
 
     const subtotal = cart.subtotal;
     const total = Math.max(0, subtotal - discount) + shippingCost;
+    const paymentDueAt =
+        data.paymentMethod === "BANK_TRANSFER"
+            ? new Date(Date.now() + settings.paymentDueDays * 24 * 60 * 60 * 1000)
+            : null;
 
     // ─── Écriture atomique ────────────────────────────────────────────────────
-    const order = await prisma.$transaction(async (tx) => {
-        // Le stock est revérifié dans la transaction : entre l'affichage du
-        // panier et la validation, une autre commande a pu vider le stock.
-        // On décrémente la variante ou le produit, jamais les deux — c'est la
-        // même source que celle utilisée pour juger la disponibilité.
+    return prisma.$transaction(async (tx) => {
+        // Décrément conditionnel : si une autre commande a vidé le stock entre
+        // l'affichage du panier et la validation, rien n'est écrit.
         for (const line of cart.lines) {
-            if (line.variantId) {
-                const variant = await tx.productVariant.findUnique({
-                    where: { id: line.variantId },
-                    select: { stock: true },
-                });
-                if (!variant || variant.stock < line.quantity) {
-                    throw new Error(
-                        `Stock insuffisant pour « ${line.name} ». Ajustez votre panier.`,
-                    );
-                }
-                await tx.productVariant.update({
-                    where: { id: line.variantId },
-                    data: { stock: { decrement: line.quantity } },
-                });
-            } else {
-                const product = await tx.product.findUnique({
-                    where: { id: line.productId },
-                    select: { stock: true },
-                });
-                if (!product || product.stock < line.quantity) {
-                    throw new Error(
-                        `Stock insuffisant pour « ${line.name} ». Ajustez votre panier.`,
-                    );
-                }
-                await tx.product.update({
-                    where: { id: line.productId },
-                    data: { stock: { decrement: line.quantity } },
-                });
+            const res = line.variantId
+                ? await tx.productVariant.updateMany({
+                      where: { id: line.variantId, stock: { gte: line.quantity } },
+                      data: { stock: { decrement: line.quantity } },
+                  })
+                : await tx.product.updateMany({
+                      where: { id: line.productId, stock: { gte: line.quantity } },
+                      data: { stock: { decrement: line.quantity } },
+                  });
+            if (res.count === 0) {
+                throw new CheckoutError(
+                    `Stock insuffisant pour « ${line.name} ». Ajustez votre panier.`,
+                );
             }
         }
 
@@ -200,10 +242,12 @@ export async function placeOrder(
 
         return tx.order.create({
             data: {
+                orderNumber: generateOrderReference(),
+                checkoutKey: data.checkoutKey,
                 userId: session?.user.id ?? null,
                 customerName: data.customerName,
                 customerEmail: data.customerEmail,
-                customerPhone: data.customerPhone || null,
+                customerPhone: data.customerPhone,
                 shippingAddress: addressJson,
                 subtotal,
                 shippingCost,
@@ -212,6 +256,7 @@ export async function placeOrder(
                 currency: settings.currency,
                 paymentStatus: "PENDING",
                 paymentMethod: data.paymentMethod,
+                paymentDueAt,
                 shippingStatus: "PENDING",
                 shippingMethod: data.shippingMethod,
                 shippingZoneId,
@@ -230,15 +275,7 @@ export async function placeOrder(
                     })),
                 },
             },
-            select: { orderNumber: true },
+            select: { id: true, orderNumber: true },
         });
     });
-
-    await writeStoredCart({ items: [] });
-
-    revalidatePath("/cart");
-    revalidatePath("/", "layout");
-    revalidatePath("/dashboard/orders");
-
-    return { orderNumber: order.orderNumber };
 }

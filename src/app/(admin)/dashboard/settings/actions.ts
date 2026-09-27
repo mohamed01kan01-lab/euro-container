@@ -23,7 +23,7 @@ export async function getSiteSettings() {
 }
 
 export async function updateSiteSettings(
-    data: Record<string, string | boolean | null | undefined>,
+    data: Record<string, string | number | boolean | null | undefined>,
 ) {
     await requireAdmin();
     return prisma.siteSettings.upsert({

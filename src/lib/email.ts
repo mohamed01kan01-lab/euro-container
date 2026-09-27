@@ -13,7 +13,7 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
  * inspection, un envoi refusé (domaine non vérifié, clé absente, destinataire
  * interdit en mode test) passerait pour un succès.
  */
-async function send(payload: {
+export async function send(payload: {
     to: string;
     subject: string;
     html: string;

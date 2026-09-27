@@ -17,6 +17,8 @@ import { formatPrice } from "@/lib/currency";
 import { PAYMENT_STATUS } from "@/lib/order-status";
 import { getOrder } from "../actions";
 import { OrderActions } from "@/components/admin/orders/order-actions";
+import { PaymentPanel } from "@/components/admin/orders/payment-panel";
+import { paymentLabel } from "@/lib/payment";
 import { ShippingTimeline } from "@/components/admin/orders/shipping-timeline";
 
 export const metadata: Metadata = { title: "Commande" };
@@ -71,6 +73,8 @@ export default async function OrderDetailPage({ params }: PageProps) {
 
             <div className="grid lg:grid-cols-[1fr_320px] gap-6 items-start">
                 <div className="space-y-6">
+                    <PaymentPanel order={order} />
+
                     {/* Client */}
                     <article className="rounded-xl border border-border bg-card p-4 space-y-3">
                         <h2 className="text-sm font-semibold">Client</h2>
@@ -180,7 +184,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
                             </div>
                             {order.paymentMethod && (
                                 <p className="text-xs text-muted-foreground pt-1">
-                                    Payé via {order.paymentMethod}
+                                    Moyen de paiement : {paymentLabel(order.paymentMethod)}
                                 </p>
                             )}
                         </div>

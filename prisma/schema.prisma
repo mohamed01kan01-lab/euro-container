@@ -39,9 +39,20 @@ enum MediaType {
 
 enum PaymentStatus {
   PENDING
+  /// Virement signalé par le client, en attente de vérification par l'admin.
+  VERIFYING
   PAID
   FAILED
+  /// Demande de remboursement ouverte (voir RefundRequest.previousStatus).
+  REFUND_REQUESTED
   REFUNDED
+  CANCELLED
+}
+
+enum RefundStatus {
+  REQUESTED
+  REFUNDED
+  REFUSED
 }
 
 enum ShippingStatus {
@@ -173,7 +184,7 @@ model SiteSettings {
   socialLinkedin      String?
   socialYoutube       String?
   socialTiktok        String?
-  currency            String   @default("XOF")
+  currency            String   @default("EUR")
   defaultLanguage     String   @default("fr")
   maintenanceMode     Boolean  @default(false)
   maintenanceMessage  String?
@@ -200,6 +211,16 @@ model SiteSettings {
   bankTransferDetails String?
   mobileMoneyEnabled  Boolean  @default(false)
   mobileMoneyDetails  String?
+  /// Coordonnées du virement : le titulaire et les deux adresses sont exigés
+  /// par les banques pour un virement international (SWIFT), pas seulement l'IBAN.
+  bankAccountHolder   String?
+  bankHolderAddress   String?
+  bankIban            String?
+  bankBic             String?
+  bankName            String?
+  bankAddress         String?
+  /// Nombre de jours pendant lesquels une commande par virement reste réservée.
+  paymentDueDays      Int      @default(7)
   robotsTxt           String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
@@ -520,10 +541,17 @@ model Order {
   shippingCost    Decimal        @default(0) @db.Decimal(10, 2)
   discount        Decimal        @default(0) @db.Decimal(10, 2)
   total           Decimal        @db.Decimal(10, 2)
-  currency        String         @default("XOF")
+  currency        String         @default("EUR")
   paymentStatus   PaymentStatus  @default(PENDING)
   paymentMethod   String?
   paymentIntentId String?
+  stripeSessionId String?
+  /// Clé générée par le navigateur au checkout : un double envoi renvoie la
+  /// commande existante au lieu d'en créer une seconde.
+  checkoutKey     String?        @unique
+  paymentDueAt    DateTime?
+  paidAt          DateTime?
+  cancelledAt     DateTime?
   shippingStatus  ShippingStatus @default(PENDING)
   shippingMethod  ShippingMethod @default(DELIVERY)
   shippingZoneId  String?
@@ -539,6 +567,48 @@ model Order {
   shippingZone ShippingZone? @relation(fields: [shippingZoneId], references: [id])
   pickupPoint  PickupPoint?  @relation(fields: [pickupPointId], references: [id])
   items        OrderItem[]
+  paymentProofs  PaymentProof[]
+  refundRequests RefundRequest[]
+}
+
+/// Justificatif de virement, stocké en accès authentifié sur Cloudinary :
+/// on ne garde que le publicId, l'URL est signée à chaque consultation.
+model PaymentProof {
+  id           String   @id @default(cuid())
+  orderId      String
+  publicId     String
+  resourceType String
+  format       String?
+  bytes        Int
+  originalName String
+  createdAt    DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+model RefundRequest {
+  id             String        @id @default(cuid())
+  orderId        String
+  reason         String
+  comment        String?
+  /// Absents pour un paiement par carte : le remboursement se fait sur la carte.
+  accountHolder  String?
+  ibanEncrypted  String?
+  ibanLast4      String?
+  bic            String?
+  status         RefundStatus  @default(REQUESTED)
+  /// Statut de paiement à restaurer si la demande est refusée.
+  previousStatus PaymentStatus
+  adminNote      String?
+  resolvedAt     DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
 }
 
 // ─── Livraison ────────────────────────────────────────────────────────────────

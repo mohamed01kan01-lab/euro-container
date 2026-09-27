@@ -1,12 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import {
-    IconLoader2,
-    IconTruck,
-    IconReceiptRefund,
-    IconNote,
-} from "@tabler/icons-react";
+import { IconLoader2, IconTruck, IconNote } from "@tabler/icons-react";
 import type { ShippingStatus } from "@prisma/client";
 import {
     Select,
@@ -15,16 +10,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,7 +20,6 @@ import { SHIPPING_STATUS, SHIPPING_VALUES } from "@/lib/order-status";
 import {
     updateShippingStatus,
     updateOrderNotes,
-    refundOrder,
     type OrderDetail,
 } from "@/app/(admin)/dashboard/orders/actions";
 
@@ -48,7 +32,6 @@ export function OrderActions({ order }: OrderActionsProps) {
     const [status, setStatus] = useState<ShippingStatus>(order.shippingStatus);
     const [tracking, setTracking] = useState(order.trackingNumber ?? "");
     const [notes, setNotes] = useState(order.notes ?? "");
-    const [refundOpen, setRefundOpen] = useState(false);
 
     function saveShipping() {
         startTransition(async () => {
@@ -75,22 +58,6 @@ export function OrderActions({ order }: OrderActionsProps) {
                     err instanceof Error
                         ? err.message
                         : "L'enregistrement a échoué.",
-                );
-            }
-        });
-    }
-
-    function handleRefund() {
-        startTransition(async () => {
-            try {
-                await refundOrder(order.id);
-                toast.success("Commande marquée comme remboursée.");
-                setRefundOpen(false);
-            } catch (err) {
-                toast.error(
-                    err instanceof Error
-                        ? err.message
-                        : "Le remboursement a échoué.",
                 );
             }
         });
@@ -173,61 +140,6 @@ export function OrderActions({ order }: OrderActionsProps) {
                 </Button>
             </section>
 
-            {order.paymentStatus === "PAID" && (
-                <>
-                    <Separator />
-                    <section className="space-y-2">
-                        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            Paiement
-                        </h2>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="w-full text-destructive hover:text-destructive"
-                            disabled={pending}
-                            onClick={() => setRefundOpen(true)}
-                        >
-                            <IconReceiptRefund size={15} className="mr-1.5" />
-                            Rembourser
-                        </Button>
-                    </section>
-                </>
-            )}
-
-            <AlertDialog open={refundOpen} onOpenChange={setRefundOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>
-                            Rembourser cette commande ?
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                            La commande passera en « Remboursé ». Le
-                            remboursement effectif auprès du prestataire de
-                            paiement n&apos;est pas encore automatisé : il doit
-                            être effectué depuis Stripe ou FeexPay.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Annuler</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={(e) => {
-                                e.preventDefault();
-                                handleRefund();
-                            }}
-                            disabled={pending}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                            {pending && (
-                                <IconLoader2
-                                    size={14}
-                                    className="mr-1.5 animate-spin"
-                                />
-                            )}
-                            Marquer comme remboursée
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
         </aside>
     );
 }

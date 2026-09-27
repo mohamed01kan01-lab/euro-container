@@ -33,6 +33,7 @@ import {
 import { toast } from "sonner";
 import { updateSiteSettings } from "@/app/(admin)/dashboard/settings/actions";
 import { MediaInput } from "@/components/admin/media/media-input";
+import { formatIban, isValidBic, isValidIban, normalizeBic, normalizeIban } from "@/lib/bank";
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
@@ -97,7 +98,7 @@ function SaveButton({ loading }: { loading: boolean }) {
     );
 }
 
-async function save(data: Record<string, string | boolean | null | undefined>) {
+async function save(data: Record<string, string | number | boolean | null | undefined>) {
     await updateSiteSettings(data);
 }
 
@@ -398,44 +399,20 @@ const integrationsSchema = z.object({
     cloudinaryCloudName: z.string().optional(),
     cloudinaryApiKey: z.string().optional(),
     cloudinaryApiSecret: z.string().optional(),
-    stripePublicKey: z.string().optional(),
-    stripeSecretKey: z.string().optional(),
-    stripeWebhookSecret: z.string().optional(),
-    feexpayPublicKey: z.string().optional(),
-    feexpaySecretKey: z.string().optional(),
     deeplApiKey: z.string().optional(),
-    codEnabled: z.boolean(),
-    bankTransferEnabled: z.boolean(),
-    bankTransferDetails: z.string().optional(),
-    mobileMoneyEnabled: z.boolean(),
-    mobileMoneyDetails: z.string().optional(),
 });
 type IntegrationsValues = z.infer<typeof integrationsSchema>;
 
 function TabIntegrations({ s }: { s: SiteSettings }) {
-    const { register, handleSubmit, setValue, watch, formState: { isSubmitting } } = useForm<IntegrationsValues>({
+    const { register, handleSubmit, formState: { isSubmitting } } = useForm<IntegrationsValues>({
         resolver: zodResolver(integrationsSchema),
         defaultValues: {
             cloudinaryCloudName: s.cloudinaryCloudName ?? "",
             cloudinaryApiKey: s.cloudinaryApiKey ?? "",
             cloudinaryApiSecret: s.cloudinaryApiSecret ?? "",
-            stripePublicKey: s.stripePublicKey ?? "",
-            stripeSecretKey: s.stripeSecretKey ?? "",
-            stripeWebhookSecret: s.stripeWebhookSecret ?? "",
-            feexpayPublicKey: s.feexpayPublicKey ?? "",
-            feexpaySecretKey: s.feexpaySecretKey ?? "",
             deeplApiKey: s.deeplApiKey ?? "",
-            codEnabled: s.codEnabled,
-            bankTransferEnabled: s.bankTransferEnabled,
-            bankTransferDetails: s.bankTransferDetails ?? "",
-            mobileMoneyEnabled: s.mobileMoneyEnabled,
-            mobileMoneyDetails: s.mobileMoneyDetails ?? "",
         },
     });
-
-    const codEnabled = watch("codEnabled");
-    const bankTransferEnabled = watch("bankTransferEnabled");
-    const mobileMoneyEnabled = watch("mobileMoneyEnabled");
 
     const onSubmit = async (data: IntegrationsValues) => {
         try {
@@ -443,17 +420,7 @@ function TabIntegrations({ s }: { s: SiteSettings }) {
                 cloudinaryCloudName: data.cloudinaryCloudName || null,
                 cloudinaryApiKey: data.cloudinaryApiKey || null,
                 cloudinaryApiSecret: data.cloudinaryApiSecret || null,
-                stripePublicKey: data.stripePublicKey || null,
-                stripeSecretKey: data.stripeSecretKey || null,
-                stripeWebhookSecret: data.stripeWebhookSecret || null,
-                feexpayPublicKey: data.feexpayPublicKey || null,
-                feexpaySecretKey: data.feexpaySecretKey || null,
                 deeplApiKey: data.deeplApiKey || null,
-                codEnabled: data.codEnabled,
-                bankTransferEnabled: data.bankTransferEnabled,
-                bankTransferDetails: data.bankTransferDetails || null,
-                mobileMoneyEnabled: data.mobileMoneyEnabled,
-                mobileMoneyDetails: data.mobileMoneyDetails || null,
             });
             toast.success("Intégrations mises à jour");
         } catch {
@@ -481,15 +448,116 @@ function TabIntegrations({ s }: { s: SiteSettings }) {
             <Separator />
 
             <section>
-                <h2 className="text-sm font-semibold mb-3">Stripe</h2>
+                <h2 className="text-sm font-semibold mb-3">DeepL</h2>
+                <FieldRow id="deeplApiKey" label="API Key">
+                    <SecretInput id="deeplApiKey" {...register("deeplApiKey")} />
+                </FieldRow>
+            </section>
+
+            <SaveButton loading={isSubmitting} />
+        </form>
+    );
+}
+
+// ─── Tab: Paiements ───────────────────────────────────────────────────────────
+
+const paymentsSchema = z
+    .object({
+        stripePublicKey: z.string().trim().refine((v) => !v || v.startsWith("pk_"), "Doit commencer par pk_"),
+        stripeSecretKey: z.string().trim().refine((v) => !v || v.startsWith("sk_") || v.startsWith("rk_"), "Doit commencer par sk_"),
+        stripeWebhookSecret: z.string().trim().refine((v) => !v || v.startsWith("whsec_"), "Doit commencer par whsec_"),
+        bankTransferEnabled: z.boolean(),
+        bankAccountHolder: z.string().trim(),
+        bankHolderAddress: z.string().trim(),
+        bankIban: z.string().trim().refine((v) => !v || isValidIban(v), "IBAN invalide (clé de contrôle incorrecte)"),
+        bankBic: z.string().trim().refine((v) => !v || isValidBic(v), "BIC invalide : 8 ou 11 caractères"),
+        bankName: z.string().trim(),
+        bankAddress: z.string().trim(),
+        paymentDueDays: z.number({ error: "Nombre requis" }).int().min(1, "Minimum 1 jour").max(60, "Maximum 60 jours"),
+        bankTransferDetails: z.string().optional(),
+    })
+    .superRefine((v, ctx) => {
+        if (!v.bankTransferEnabled) return;
+        if (!v.bankAccountHolder) ctx.addIssue({ code: "custom", path: ["bankAccountHolder"], message: "Requis pour proposer le virement" });
+        if (!v.bankIban) ctx.addIssue({ code: "custom", path: ["bankIban"], message: "Requis pour proposer le virement" });
+        if (!v.bankBic) ctx.addIssue({ code: "custom", path: ["bankBic"], message: "Requis : de nombreuses banques l'exigent" });
+    });
+type PaymentsValues = z.infer<typeof paymentsSchema>;
+
+function TabPayments({ s }: { s: SiteSettings }) {
+    const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm<PaymentsValues>({
+        resolver: zodResolver(paymentsSchema),
+        defaultValues: {
+            stripePublicKey: s.stripePublicKey ?? "",
+            stripeSecretKey: s.stripeSecretKey ?? "",
+            stripeWebhookSecret: s.stripeWebhookSecret ?? "",
+            bankTransferEnabled: s.bankTransferEnabled,
+            bankAccountHolder: s.bankAccountHolder ?? "",
+            bankHolderAddress: s.bankHolderAddress ?? "",
+            bankIban: s.bankIban ? formatIban(s.bankIban) : "",
+            bankBic: s.bankBic ?? "",
+            bankName: s.bankName ?? "",
+            bankAddress: s.bankAddress ?? "",
+            paymentDueDays: s.paymentDueDays,
+            bankTransferDetails: s.bankTransferDetails ?? "",
+        },
+    });
+
+    const bankTransferEnabled = watch("bankTransferEnabled");
+    const secretKey = watch("stripeSecretKey");
+    const stripeMode = secretKey?.startsWith("sk_live_") ? "live" : secretKey?.startsWith("sk_test_") ? "test" : null;
+    const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/stripe/webhook`;
+
+    const onSubmit = async (data: PaymentsValues) => {
+        try {
+            await save({
+                stripePublicKey: data.stripePublicKey || null,
+                stripeSecretKey: data.stripeSecretKey || null,
+                stripeWebhookSecret: data.stripeWebhookSecret || null,
+                bankTransferEnabled: data.bankTransferEnabled,
+                bankAccountHolder: data.bankAccountHolder || null,
+                bankHolderAddress: data.bankHolderAddress || null,
+                bankIban: data.bankIban ? normalizeIban(data.bankIban) : null,
+                bankBic: data.bankBic ? normalizeBic(data.bankBic) : null,
+                bankName: data.bankName || null,
+                bankAddress: data.bankAddress || null,
+                paymentDueDays: data.paymentDueDays,
+                bankTransferDetails: data.bankTransferDetails || null,
+            });
+            toast.success("Paiements mis à jour");
+        } catch {
+            toast.error("Erreur lors de la mise à jour");
+        }
+    };
+
+    return (
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-xl">
+            <section>
+                <div className="flex items-center justify-between gap-2 mb-1">
+                    <h2 className="text-sm font-semibold">Carte bancaire (Stripe)</h2>
+                    {stripeMode && (
+                        <span className={stripeMode === "live" ? "rounded-full bg-green-600/10 px-2 py-0.5 text-xs font-medium text-green-700" : "rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-700"}>
+                            {stripeMode === "live" ? "Mode production" : "Mode test"}
+                        </span>
+                    )}
+                </div>
+                <p className="text-xs text-muted-foreground mb-3">
+                    Proposée au checkout dès que les deux clés sont renseignées. En mode test (clés sk_test_),
+                    payez avec la carte 4242 4242 4242 4242, date future, CVC quelconque.
+                </p>
                 <div className="space-y-4">
-                    <FieldRow id="stripePublicKey" label="Clé publique" hint="Commence par pk_">
+                    <FieldRow id="stripePublicKey" label="Clé publique" hint="Commence par pk_" error={errors.stripePublicKey?.message}>
                         <Input id="stripePublicKey" {...register("stripePublicKey")} />
                     </FieldRow>
-                    <FieldRow id="stripeSecretKey" label="Clé secrète" hint="Commence par sk_">
+                    <FieldRow id="stripeSecretKey" label="Clé secrète" hint="Commence par sk_" error={errors.stripeSecretKey?.message}>
                         <SecretInput id="stripeSecretKey" {...register("stripeSecretKey")} />
                     </FieldRow>
-                    <FieldRow id="stripeWebhookSecret" label="Webhook secret" hint="Commence par whsec_">
+                    <FieldRow
+                        id="stripeWebhookSecret"
+                        label="Webhook secret"
+                        hint={`Endpoint à créer dans Stripe : ${webhookUrl} (événements checkout.session.completed et checkout.session.async_payment_succeeded)`}
+                        error={errors.stripeWebhookSecret?.message}
+                    >
                         <SecretInput id="stripeWebhookSecret" {...register("stripeWebhookSecret")} />
                     </FieldRow>
                 </div>
@@ -498,96 +566,58 @@ function TabIntegrations({ s }: { s: SiteSettings }) {
             <Separator />
 
             <section>
-                <h2 className="text-sm font-semibold mb-3">FeexPay</h2>
-                <div className="space-y-4">
-                    <FieldRow id="feexpayPublicKey" label="Clé publique">
-                        <Input id="feexpayPublicKey" {...register("feexpayPublicKey")} />
-                    </FieldRow>
-                    <FieldRow id="feexpaySecretKey" label="Clé secrète">
-                        <SecretInput id="feexpaySecretKey" {...register("feexpaySecretKey")} />
-                    </FieldRow>
+                <div className="flex items-center justify-between mb-1">
+                    <h2 className="text-sm font-semibold">Virement bancaire</h2>
+                    <Switch
+                        id="bankTransferEnabled"
+                        checked={bankTransferEnabled}
+                        onCheckedChange={(v) => setValue("bankTransferEnabled", v, { shouldValidate: true })}
+                        aria-label="Activer le virement"
+                    />
                 </div>
-            </section>
-
-            <Separator />
-
-            <section>
-                <h2 className="text-sm font-semibold mb-1">Paiements manuels</h2>
                 <p className="text-xs text-muted-foreground mb-3">
-                    Toujours proposés au client, y compris lorsque Stripe ou
-                    FeexPay sont configurés.
+                    Affichées au client avec un bouton copier par champ et un QR code SEPA. Titulaire, BIC et adresses
+                    sont exigés par les banques pour les virements internationaux.
                 </p>
                 <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <Label htmlFor="codEnabled" className="font-normal">
-                            Paiement à la livraison
-                        </Label>
-                        <Switch
-                            id="codEnabled"
-                            checked={codEnabled}
-                            onCheckedChange={(v) => setValue("codEnabled", v)}
-                        />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                        <Label htmlFor="bankTransferEnabled" className="font-normal">
-                            Virement bancaire
-                        </Label>
-                        <Switch
-                            id="bankTransferEnabled"
-                            checked={bankTransferEnabled}
-                            onCheckedChange={(v) => setValue("bankTransferEnabled", v)}
-                        />
-                    </div>
-                    {bankTransferEnabled && (
-                        <FieldRow
-                            id="bankTransferDetails"
-                            label="Coordonnées bancaires"
-                            hint="Affichées au client après commande"
-                        >
-                            <Textarea
-                                id="bankTransferDetails"
-                                rows={3}
-                                className="resize-none"
-                                {...register("bankTransferDetails")}
+                    <FieldRow id="bankAccountHolder" label="Titulaire du compte (bénéficiaire)" hint="Raison sociale exacte, telle qu'enregistrée par la banque" error={errors.bankAccountHolder?.message}>
+                        <Input id="bankAccountHolder" {...register("bankAccountHolder")} />
+                    </FieldRow>
+                    <FieldRow id="bankHolderAddress" label="Adresse du titulaire" error={errors.bankHolderAddress?.message}>
+                        <Textarea id="bankHolderAddress" rows={2} className="resize-none" {...register("bankHolderAddress")} />
+                    </FieldRow>
+                    <div className="grid gap-4 sm:grid-cols-[1fr_180px]">
+                        <FieldRow id="bankIban" label="IBAN" error={errors.bankIban?.message}>
+                            <Input
+                                id="bankIban"
+                                className="font-mono"
+                                {...register("bankIban", {
+                                    onChange: (e) => setValue("bankIban", formatIban(e.target.value)),
+                                })}
                             />
                         </FieldRow>
-                    )}
-
-                    <div className="flex items-center justify-between">
-                        <Label htmlFor="mobileMoneyEnabled" className="font-normal">
-                            Transfert Mobile Money
-                        </Label>
-                        <Switch
-                            id="mobileMoneyEnabled"
-                            checked={mobileMoneyEnabled}
-                            onCheckedChange={(v) => setValue("mobileMoneyEnabled", v)}
-                        />
-                    </div>
-                    {mobileMoneyEnabled && (
-                        <FieldRow
-                            id="mobileMoneyDetails"
-                            label="Numéro et instructions"
-                            hint="Affichés au client après commande"
-                        >
-                            <Textarea
-                                id="mobileMoneyDetails"
-                                rows={3}
-                                className="resize-none"
-                                {...register("mobileMoneyDetails")}
-                            />
+                        <FieldRow id="bankBic" label="BIC / SWIFT" error={errors.bankBic?.message}>
+                            <Input id="bankBic" className="font-mono uppercase" {...register("bankBic")} />
                         </FieldRow>
-                    )}
+                    </div>
+                    <FieldRow id="bankName" label="Nom de la banque" error={errors.bankName?.message}>
+                        <Input id="bankName" {...register("bankName")} />
+                    </FieldRow>
+                    <FieldRow id="bankAddress" label="Adresse de la banque (agence)" error={errors.bankAddress?.message}>
+                        <Textarea id="bankAddress" rows={2} className="resize-none" {...register("bankAddress")} />
+                    </FieldRow>
+                    <FieldRow
+                        id="paymentDueDays"
+                        label="Délai de réservation (jours)"
+                        hint="Durée annoncée au client pendant laquelle sa commande reste réservée en attendant le virement"
+                        error={errors.paymentDueDays?.message}
+                    >
+                        <Input id="paymentDueDays" type="number" min={1} max={60} className="w-28" {...register("paymentDueDays", { valueAsNumber: true })} />
+                    </FieldRow>
+                    <FieldRow id="bankTransferDetails" label="Instructions complémentaires" hint="Facultatif, affiché sous les coordonnées (ex. délai de traitement)">
+                        <Textarea id="bankTransferDetails" rows={3} className="resize-none" {...register("bankTransferDetails")} />
+                    </FieldRow>
                 </div>
-            </section>
-
-            <Separator />
-
-            <section>
-                <h2 className="text-sm font-semibold mb-3">DeepL</h2>
-                <FieldRow id="deeplApiKey" label="API Key">
-                    <SecretInput id="deeplApiKey" {...register("deeplApiKey")} />
-                </FieldRow>
             </section>
 
             <SaveButton loading={isSubmitting} />
@@ -714,6 +744,7 @@ export function SettingsTabs({ settings }: { settings: SiteSettings }) {
                 <TabsTrigger value="seo">SEO</TabsTrigger>
                 <TabsTrigger value="social">Réseaux sociaux</TabsTrigger>
                 <TabsTrigger value="tracking">Tracking</TabsTrigger>
+                <TabsTrigger value="payments">Paiements</TabsTrigger>
                 <TabsTrigger value="integrations">Intégrations</TabsTrigger>
                 <TabsTrigger value="advanced">Avancé</TabsTrigger>
             </TabsList>
@@ -729,6 +760,9 @@ export function SettingsTabs({ settings }: { settings: SiteSettings }) {
             </TabsContent>
             <TabsContent value="tracking" className="mt-6">
                 <TabTracking s={settings} />
+            </TabsContent>
+            <TabsContent value="payments" className="mt-6">
+                <TabPayments s={settings} />
             </TabsContent>
             <TabsContent value="integrations" className="mt-6">
                 <TabIntegrations s={settings} />
