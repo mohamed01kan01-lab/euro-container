@@ -23,13 +23,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 import { updateSiteSettings } from "@/app/(admin)/dashboard/settings/actions";
 import { MediaInput } from "@/components/admin/media/media-input";
@@ -60,6 +53,28 @@ function FieldRow({
     );
 }
 
+/**
+ * Réglages = données de configuration, jamais des données personnelles : aucune
+ * suggestion du navigateur ni des gestionnaires de mots de passe (1Password,
+ * LastPass, Bitwarden ont chacun leur attribut d'exclusion).
+ */
+const NO_FILL = {
+    autoComplete: "off",
+    spellCheck: false,
+    "data-1p-ignore": true,
+    "data-lpignore": "true",
+    "data-bwignore": true,
+    "data-form-type": "other",
+} as const;
+
+function NoFillInput(props: React.ComponentProps<typeof Input>) {
+    return <Input {...NO_FILL} {...props} />;
+}
+
+function NoFillTextarea(props: React.ComponentProps<typeof Textarea>) {
+    return <Textarea {...NO_FILL} {...props} />;
+}
+
 function SecretInput({
     id,
     placeholder,
@@ -68,13 +83,14 @@ function SecretInput({
     const [visible, setVisible] = useState(false);
     return (
         <div className="relative">
-            <Input
+            <NoFillInput
                 id={id}
                 type={visible ? "text" : "password"}
                 placeholder={placeholder}
                 className="pr-10"
-                autoComplete="off"
                 {...props}
+                // Chrome ignore "off" sur un champ mot de passe ; "new-password" bloque le remplissage.
+                autoComplete="new-password"
             />
             <button
                 type="button"
@@ -150,15 +166,15 @@ function TabGeneral({ s }: { s: SiteSettings }) {
     };
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-xl">
+        <form autoComplete="off" onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-xl">
             <FieldRow id="siteName" label="Nom du site" error={errors.siteName?.message}>
-                <Input id="siteName" {...register("siteName")} />
+                <NoFillInput id="siteName" {...register("siteName")} />
             </FieldRow>
             <FieldRow id="siteDescription" label="Description" error={errors.siteDescription?.message}>
-                <Textarea id="siteDescription" rows={2} {...register("siteDescription")} />
+                <NoFillTextarea id="siteDescription" rows={2} {...register("siteDescription")} />
             </FieldRow>
             <FieldRow id="siteSlogan" label="Slogan">
-                <Input id="siteSlogan" {...register("siteSlogan")} />
+                <NoFillInput id="siteSlogan" {...register("siteSlogan")} />
             </FieldRow>
             <FieldRow id="logoUrl" label="URL du logo" hint="URL externe ou Cloudinary" error={errors.logoUrl?.message}>
                 <MediaInput
@@ -180,13 +196,13 @@ function TabGeneral({ s }: { s: SiteSettings }) {
             </FieldRow>
             <Separator />
             <FieldRow id="contactEmail" label="Email de contact" error={errors.contactEmail?.message}>
-                <Input id="contactEmail" type="email" {...register("contactEmail")} />
+                <NoFillInput id="contactEmail" type="email" {...register("contactEmail")} />
             </FieldRow>
             <FieldRow id="phone" label="Téléphone">
-                <Input id="phone" {...register("phone")} />
+                <NoFillInput id="phone" {...register("phone")} />
             </FieldRow>
             <FieldRow id="address" label="Adresse">
-                <Textarea id="address" rows={2} {...register("address")} />
+                <NoFillTextarea id="address" rows={2} {...register("address")} />
             </FieldRow>
             <SaveButton loading={isSubmitting} />
         </form>
@@ -198,7 +214,6 @@ function TabGeneral({ s }: { s: SiteSettings }) {
 const seoSchema = z.object({
     seoTitle: z.string().max(60, "Max 60 caractères").optional(),
     seoDescription: z.string().max(160, "Max 160 caractères").optional(),
-    robotsTxt: z.string().optional(),
 });
 type SeoValues = z.infer<typeof seoSchema>;
 
@@ -208,7 +223,6 @@ function TabSeo({ s }: { s: SiteSettings }) {
         defaultValues: {
             seoTitle: s.seoTitle ?? "",
             seoDescription: s.seoDescription ?? "",
-            robotsTxt: s.robotsTxt ?? "",
         },
     });
 
@@ -220,7 +234,6 @@ function TabSeo({ s }: { s: SiteSettings }) {
             await save({
                 seoTitle: data.seoTitle || null,
                 seoDescription: data.seoDescription || null,
-                robotsTxt: data.robotsTxt || null,
             });
             toast.success("Réglages SEO mis à jour");
         } catch {
@@ -229,14 +242,14 @@ function TabSeo({ s }: { s: SiteSettings }) {
     };
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-xl">
+        <form autoComplete="off" onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-xl">
             <FieldRow
                 id="seoTitle"
                 label="Titre par défaut"
                 hint={`${seoTitle.length}/60 caractères`}
                 error={errors.seoTitle?.message}
             >
-                <Input id="seoTitle" {...register("seoTitle")} />
+                <NoFillInput id="seoTitle" {...register("seoTitle")} />
             </FieldRow>
             <FieldRow
                 id="seoDescription"
@@ -244,10 +257,7 @@ function TabSeo({ s }: { s: SiteSettings }) {
                 hint={`${seoDesc.length}/160 caractères`}
                 error={errors.seoDescription?.message}
             >
-                <Textarea id="seoDescription" rows={3} {...register("seoDescription")} />
-            </FieldRow>
-            <FieldRow id="robotsTxt" label="robots.txt" hint="Contenu personnalisé du fichier robots.txt">
-                <Textarea id="robotsTxt" rows={6} className="font-mono text-xs" {...register("robotsTxt")} />
+                <NoFillTextarea id="seoDescription" rows={3} {...register("seoDescription")} />
             </FieldRow>
             <SaveButton loading={isSubmitting} />
         </form>
@@ -305,14 +315,14 @@ function TabSocial({ s }: { s: SiteSettings }) {
     };
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-xl">
+        <form autoComplete="off" onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-xl">
             {SOCIAL_FIELDS.map(({ key, label, icon, placeholder }) => (
                 <FieldRow key={key} id={key} label={label} error={errors[key]?.message}>
                     <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                             {icon}
                         </span>
-                        <Input
+                        <NoFillInput
                             id={key}
                             placeholder={placeholder}
                             className="pl-9"
@@ -326,80 +336,12 @@ function TabSocial({ s }: { s: SiteSettings }) {
     );
 }
 
-// ─── Tab: Tracking ────────────────────────────────────────────────────────────
-
-const trackingSchema = z.object({
-    gtmId: z.string().optional(),
-    ga4Id: z.string().optional(),
-    metaPixelId: z.string().optional(),
-    tiktokPixelId: z.string().optional(),
-    metaCapiToken: z.string().optional(),
-    googleEnhancedConv: z.string().optional(),
-});
-type TrackingValues = z.infer<typeof trackingSchema>;
-
-function TabTracking({ s }: { s: SiteSettings }) {
-    const { register, handleSubmit, formState: { isSubmitting } } = useForm<TrackingValues>({
-        resolver: zodResolver(trackingSchema),
-        defaultValues: {
-            gtmId: s.gtmId ?? "",
-            ga4Id: s.ga4Id ?? "",
-            metaPixelId: s.metaPixelId ?? "",
-            tiktokPixelId: s.tiktokPixelId ?? "",
-            metaCapiToken: s.metaCapiToken ?? "",
-            googleEnhancedConv: s.googleEnhancedConv ?? "",
-        },
-    });
-
-    const onSubmit = async (data: TrackingValues) => {
-        try {
-            await save({
-                gtmId: data.gtmId || null,
-                ga4Id: data.ga4Id || null,
-                metaPixelId: data.metaPixelId || null,
-                tiktokPixelId: data.tiktokPixelId || null,
-                metaCapiToken: data.metaCapiToken || null,
-                googleEnhancedConv: data.googleEnhancedConv || null,
-            });
-            toast.success("Tracking mis à jour");
-        } catch {
-            toast.error("Erreur lors de la mise à jour");
-        }
-    };
-
-    return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-xl">
-            <FieldRow id="gtmId" label="Google Tag Manager ID" hint="Format : GTM-XXXXXXX">
-                <Input id="gtmId" placeholder="GTM-XXXXXXX" {...register("gtmId")} />
-            </FieldRow>
-            <FieldRow id="ga4Id" label="Google Analytics 4 ID" hint="Format : G-XXXXXXXXXX">
-                <Input id="ga4Id" placeholder="G-XXXXXXXXXX" {...register("ga4Id")} />
-            </FieldRow>
-            <FieldRow id="metaPixelId" label="Meta Pixel ID">
-                <Input id="metaPixelId" placeholder="1234567890" {...register("metaPixelId")} />
-            </FieldRow>
-            <FieldRow id="tiktokPixelId" label="TikTok Pixel ID">
-                <Input id="tiktokPixelId" placeholder="CXXXXXXXXXXXXXXXX" {...register("tiktokPixelId")} />
-            </FieldRow>
-            <Separator />
-            <FieldRow id="metaCapiToken" label="Meta CAPI Access Token" hint="Clé serveur — jamais exposée côté client">
-                <SecretInput id="metaCapiToken" placeholder="EAA…" {...register("metaCapiToken")} />
-            </FieldRow>
-            <FieldRow id="googleEnhancedConv" label="Google Enhanced Conversions" hint="Conversion ID Google Ads">
-                <Input id="googleEnhancedConv" placeholder="AW-XXXXXXXXXX" {...register("googleEnhancedConv")} />
-            </FieldRow>
-            <SaveButton loading={isSubmitting} />
-        </form>
-    );
-}
-
 // ─── Tab: Intégrations ────────────────────────────────────────────────────────
 
 const integrationsSchema = z.object({
     cloudinaryCloudName: z.string().optional(),
     cloudinaryApiKey: z.string().optional(),
     cloudinaryApiSecret: z.string().optional(),
-    deeplApiKey: z.string().optional(),
 });
 type IntegrationsValues = z.infer<typeof integrationsSchema>;
 
@@ -410,7 +352,6 @@ function TabIntegrations({ s }: { s: SiteSettings }) {
             cloudinaryCloudName: s.cloudinaryCloudName ?? "",
             cloudinaryApiKey: s.cloudinaryApiKey ?? "",
             cloudinaryApiSecret: s.cloudinaryApiSecret ?? "",
-            deeplApiKey: s.deeplApiKey ?? "",
         },
     });
 
@@ -420,7 +361,6 @@ function TabIntegrations({ s }: { s: SiteSettings }) {
                 cloudinaryCloudName: data.cloudinaryCloudName || null,
                 cloudinaryApiKey: data.cloudinaryApiKey || null,
                 cloudinaryApiSecret: data.cloudinaryApiSecret || null,
-                deeplApiKey: data.deeplApiKey || null,
             });
             toast.success("Intégrations mises à jour");
         } catch {
@@ -429,12 +369,12 @@ function TabIntegrations({ s }: { s: SiteSettings }) {
     };
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-xl">
+        <form autoComplete="off" onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-xl">
             <section>
                 <h2 className="text-sm font-semibold mb-3">Cloudinary</h2>
                 <div className="space-y-4">
                     <FieldRow id="cloudinaryCloudName" label="Cloud Name">
-                        <Input id="cloudinaryCloudName" {...register("cloudinaryCloudName")} />
+                        <NoFillInput id="cloudinaryCloudName" {...register("cloudinaryCloudName")} />
                     </FieldRow>
                     <FieldRow id="cloudinaryApiKey" label="API Key">
                         <SecretInput id="cloudinaryApiKey" {...register("cloudinaryApiKey")} />
@@ -443,15 +383,6 @@ function TabIntegrations({ s }: { s: SiteSettings }) {
                         <SecretInput id="cloudinaryApiSecret" {...register("cloudinaryApiSecret")} />
                     </FieldRow>
                 </div>
-            </section>
-
-            <Separator />
-
-            <section>
-                <h2 className="text-sm font-semibold mb-3">DeepL</h2>
-                <FieldRow id="deeplApiKey" label="API Key">
-                    <SecretInput id="deeplApiKey" {...register("deeplApiKey")} />
-                </FieldRow>
             </section>
 
             <SaveButton loading={isSubmitting} />
@@ -531,7 +462,7 @@ function TabPayments({ s }: { s: SiteSettings }) {
     };
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-xl">
+        <form autoComplete="off" onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-xl">
             <section>
                 <div className="flex items-center justify-between gap-2 mb-1">
                     <h2 className="text-sm font-semibold">Carte bancaire (Stripe)</h2>
@@ -547,7 +478,7 @@ function TabPayments({ s }: { s: SiteSettings }) {
                 </p>
                 <div className="space-y-4">
                     <FieldRow id="stripePublicKey" label="Clé publique" hint="Commence par pk_" error={errors.stripePublicKey?.message}>
-                        <Input id="stripePublicKey" {...register("stripePublicKey")} />
+                        <NoFillInput id="stripePublicKey" {...register("stripePublicKey")} />
                     </FieldRow>
                     <FieldRow id="stripeSecretKey" label="Clé secrète" hint="Commence par sk_" error={errors.stripeSecretKey?.message}>
                         <SecretInput id="stripeSecretKey" {...register("stripeSecretKey")} />
@@ -581,14 +512,14 @@ function TabPayments({ s }: { s: SiteSettings }) {
                 </p>
                 <div className="space-y-4">
                     <FieldRow id="bankAccountHolder" label="Titulaire du compte (bénéficiaire)" hint="Raison sociale exacte, telle qu'enregistrée par la banque" error={errors.bankAccountHolder?.message}>
-                        <Input id="bankAccountHolder" {...register("bankAccountHolder")} />
+                        <NoFillInput id="bankAccountHolder" {...register("bankAccountHolder")} />
                     </FieldRow>
                     <FieldRow id="bankHolderAddress" label="Adresse du titulaire" error={errors.bankHolderAddress?.message}>
-                        <Textarea id="bankHolderAddress" rows={2} className="resize-none" {...register("bankHolderAddress")} />
+                        <NoFillTextarea id="bankHolderAddress" rows={2} className="resize-none" {...register("bankHolderAddress")} />
                     </FieldRow>
                     <div className="grid gap-4 sm:grid-cols-[1fr_180px]">
                         <FieldRow id="bankIban" label="IBAN" error={errors.bankIban?.message}>
-                            <Input
+                            <NoFillInput
                                 id="bankIban"
                                 className="font-mono"
                                 {...register("bankIban", {
@@ -597,14 +528,14 @@ function TabPayments({ s }: { s: SiteSettings }) {
                             />
                         </FieldRow>
                         <FieldRow id="bankBic" label="BIC / SWIFT" error={errors.bankBic?.message}>
-                            <Input id="bankBic" className="font-mono uppercase" {...register("bankBic")} />
+                            <NoFillInput id="bankBic" className="font-mono uppercase" {...register("bankBic")} />
                         </FieldRow>
                     </div>
                     <FieldRow id="bankName" label="Nom de la banque" error={errors.bankName?.message}>
-                        <Input id="bankName" {...register("bankName")} />
+                        <NoFillInput id="bankName" {...register("bankName")} />
                     </FieldRow>
                     <FieldRow id="bankAddress" label="Adresse de la banque (agence)" error={errors.bankAddress?.message}>
-                        <Textarea id="bankAddress" rows={2} className="resize-none" {...register("bankAddress")} />
+                        <NoFillTextarea id="bankAddress" rows={2} className="resize-none" {...register("bankAddress")} />
                     </FieldRow>
                     <FieldRow
                         id="paymentDueDays"
@@ -612,10 +543,10 @@ function TabPayments({ s }: { s: SiteSettings }) {
                         hint="Durée annoncée au client pendant laquelle sa commande reste réservée en attendant le virement"
                         error={errors.paymentDueDays?.message}
                     >
-                        <Input id="paymentDueDays" type="number" min={1} max={60} className="w-28" {...register("paymentDueDays", { valueAsNumber: true })} />
+                        <NoFillInput id="paymentDueDays" type="number" min={1} max={60} className="w-28" {...register("paymentDueDays", { valueAsNumber: true })} />
                     </FieldRow>
                     <FieldRow id="bankTransferDetails" label="Instructions complémentaires" hint="Facultatif, affiché sous les coordonnées (ex. délai de traitement)">
-                        <Textarea id="bankTransferDetails" rows={3} className="resize-none" {...register("bankTransferDetails")} />
+                        <NoFillTextarea id="bankTransferDetails" rows={3} className="resize-none" {...register("bankTransferDetails")} />
                     </FieldRow>
                 </div>
             </section>
@@ -625,151 +556,37 @@ function TabPayments({ s }: { s: SiteSettings }) {
     );
 }
 
-// ─── Tab: Avancé ──────────────────────────────────────────────────────────────
-
-const advancedSchema = z.object({
-    currency: z.string().min(1),
-    defaultLanguage: z.string().min(1),
-    maintenanceMode: z.boolean(),
-    maintenanceMessage: z.string().optional(),
-});
-type AdvancedValues = z.infer<typeof advancedSchema>;
-
-const CURRENCIES = ["EUR", "USD", "XOF", "GBP", "CAD", "CHF", "MAD", "DZD", "TND"];
-const LOCALES = [
-    { value: "fr", label: "Français" },
-    { value: "en", label: "English" },
-    { value: "es", label: "Español" },
-    { value: "ar", label: "العربية" },
-];
-
-function TabAdvanced({ s }: { s: SiteSettings }) {
-    const { register, handleSubmit, setValue, watch, formState: { isSubmitting } } = useForm<AdvancedValues>({
-        resolver: zodResolver(advancedSchema),
-        defaultValues: {
-            currency: s.currency,
-            defaultLanguage: s.defaultLanguage,
-            maintenanceMode: s.maintenanceMode,
-            maintenanceMessage: s.maintenanceMessage ?? "",
-        },
-    });
-
-    const maintenanceMode = watch("maintenanceMode");
-
-    const onSubmit = async (data: AdvancedValues) => {
-        try {
-            await save({
-                currency: data.currency,
-                defaultLanguage: data.defaultLanguage,
-                maintenanceMode: data.maintenanceMode,
-                maintenanceMessage: data.maintenanceMessage || null,
-            });
-            toast.success("Réglages avancés mis à jour");
-        } catch {
-            toast.error("Erreur lors de la mise à jour");
-        }
-    };
-
-    return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-xl">
-            <FieldRow id="currency" label="Devise par défaut">
-                <Select
-                    defaultValue={s.currency}
-                    onValueChange={(v) => setValue("currency", v)}
-                >
-                    <SelectTrigger id="currency">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {CURRENCIES.map((c) => (
-                            <SelectItem key={c} value={c}>{c}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </FieldRow>
-
-            <FieldRow id="defaultLanguage" label="Langue par défaut">
-                <Select
-                    defaultValue={s.defaultLanguage}
-                    onValueChange={(v) => setValue("defaultLanguage", v)}
-                >
-                    <SelectTrigger id="defaultLanguage">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {LOCALES.map(({ value, label }) => (
-                            <SelectItem key={value} value={value}>{label}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </FieldRow>
-
-            <Separator />
-
-            <div className="flex items-center justify-between rounded-lg border border-border p-4">
-                <div className="space-y-0.5">
-                    <p className="text-sm font-medium">Mode maintenance</p>
-                    <p className="text-xs text-muted-foreground">
-                        Le site affiche une page de maintenance aux visiteurs
-                    </p>
-                </div>
-                <Switch
-                    checked={maintenanceMode}
-                    onCheckedChange={(v) => setValue("maintenanceMode", v)}
-                />
-            </div>
-
-            {maintenanceMode && (
-                <FieldRow
-                    id="maintenanceMessage"
-                    label="Message de maintenance"
-                    hint="Affiché aux visiteurs pendant la maintenance"
-                >
-                    <Textarea id="maintenanceMessage" rows={3} {...register("maintenanceMessage")} />
-                </FieldRow>
-            )}
-
-            <SaveButton loading={isSubmitting} />
-        </form>
-    );
-}
-
 // ─── Main export ──────────────────────────────────────────────────────────────
+
+/**
+ * Onglets volontairement absents (champs conservés en base) : Tracking, aucun
+ * script n'est branché sur le site public ; Avancé, la devise est fixée à EUR,
+ * la langue est gérée par next-intl et le mode maintenance n'est pas branché.
+ */
+const TABS = [
+    { value: "general", label: "Général", Tab: TabGeneral },
+    { value: "payments", label: "Paiements", Tab: TabPayments },
+    { value: "seo", label: "SEO", Tab: TabSeo },
+    { value: "social", label: "Réseaux sociaux", Tab: TabSocial },
+    { value: "integrations", label: "Intégrations", Tab: TabIntegrations },
+] as const;
 
 export function SettingsTabs({ settings }: { settings: SiteSettings }) {
     return (
         <Tabs defaultValue="general">
-            <TabsList className="flex-wrap h-auto gap-1">
-                <TabsTrigger value="general">Général</TabsTrigger>
-                <TabsTrigger value="seo">SEO</TabsTrigger>
-                <TabsTrigger value="social">Réseaux sociaux</TabsTrigger>
-                <TabsTrigger value="tracking">Tracking</TabsTrigger>
-                <TabsTrigger value="payments">Paiements</TabsTrigger>
-                <TabsTrigger value="integrations">Intégrations</TabsTrigger>
-                <TabsTrigger value="advanced">Avancé</TabsTrigger>
+            <TabsList className="h-auto flex-wrap gap-1 rounded-full p-1">
+                {TABS.map(({ value, label }) => (
+                    <TabsTrigger key={value} value={value} className="rounded-full px-4">
+                        {label}
+                    </TabsTrigger>
+                ))}
             </TabsList>
 
-            <TabsContent value="general" className="mt-6">
-                <TabGeneral s={settings} />
-            </TabsContent>
-            <TabsContent value="seo" className="mt-6">
-                <TabSeo s={settings} />
-            </TabsContent>
-            <TabsContent value="social" className="mt-6">
-                <TabSocial s={settings} />
-            </TabsContent>
-            <TabsContent value="tracking" className="mt-6">
-                <TabTracking s={settings} />
-            </TabsContent>
-            <TabsContent value="payments" className="mt-6">
-                <TabPayments s={settings} />
-            </TabsContent>
-            <TabsContent value="integrations" className="mt-6">
-                <TabIntegrations s={settings} />
-            </TabsContent>
-            <TabsContent value="advanced" className="mt-6">
-                <TabAdvanced s={settings} />
-            </TabsContent>
+            {TABS.map(({ value, Tab }) => (
+                <TabsContent key={value} value={value} className="mt-6 rounded-3xl border border-border bg-card p-5 sm:p-7">
+                    <Tab s={settings} />
+                </TabsContent>
+            ))}
         </Tabs>
     );
 }

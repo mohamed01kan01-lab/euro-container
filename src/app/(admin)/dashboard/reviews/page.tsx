@@ -44,7 +44,7 @@ export default async function ReviewsPage({ searchParams }: PageProps) {
                 }
                 actions={
                     stats.total > 0 ? (
-                        <div className="rounded-xl border border-border bg-card px-4 py-3 text-right">
+                        <div className="rounded-3xl border border-border bg-card px-4 py-3 text-right">
                             <p className="text-xs text-muted-foreground">
                                 Note moyenne publiée
                             </p>

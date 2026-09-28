@@ -212,7 +212,7 @@ export function PostEditor({ post, categories, tags }: PostEditorProps) {
 
                     {/* Sidebar */}
                     <div className="lg:sticky lg:top-4">
-                        <div className="rounded-xl border border-border bg-card p-4">
+                        <div className="rounded-3xl border border-border bg-card p-4">
                             <PostSidebar categories={categories} tags={tags} />
                         </div>
                     </div>

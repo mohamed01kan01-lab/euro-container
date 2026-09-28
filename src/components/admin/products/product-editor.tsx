@@ -522,7 +522,7 @@ export function ProductEditor({
                     </article>
 
                     <div className="lg:sticky lg:top-4">
-                        <div className="rounded-xl border border-border bg-card p-4">
+                        <div className="rounded-3xl border border-border bg-card p-4">
                             <ProductSidebar
                                 categories={categories}
                                 tags={tags}

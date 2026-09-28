@@ -64,7 +64,7 @@ export function OrderActions({ order }: OrderActionsProps) {
     }
 
     return (
-        <aside className="space-y-5 rounded-xl border border-border bg-card p-4">
+        <aside className="space-y-5 rounded-3xl border border-border bg-card p-4">
             <section className="space-y-3">
                 <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Livraison

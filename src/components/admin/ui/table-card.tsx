@@ -16,7 +16,7 @@ export function TableCard({ children, className }: TableCardProps) {
     return (
         <div
             className={cn(
-                "overflow-hidden rounded-xl border border-border bg-card",
+                "overflow-hidden rounded-3xl border border-border bg-card",
                 className,
             )}
         >

@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import {
     IconShoppingCart,
     IconCurrencyEuro,
     IconUsers,
-    IconFileText,
+    IconChecklist,
 } from "@tabler/icons-react";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/currency";
@@ -53,7 +54,8 @@ async function fetchKpis() {
         revenueYesterday,
         clientsToday,
         clientsYesterday,
-        postsPublished,
+        toVerify,
+        toRefund,
     ] = await Promise.all([
         prisma.order.count({ where: { createdAt: { gte: todayStart } } }),
         prisma.order.count({ where: { createdAt: { gte: yesterdayStart, lt: todayStart } } }),
@@ -61,7 +63,8 @@ async function fetchKpis() {
         prisma.order.aggregate({ _sum: { total: true }, where: { createdAt: { gte: yesterdayStart, lt: todayStart }, paymentStatus: "PAID" } }),
         prisma.user.count({ where: { createdAt: { gte: todayStart }, role: "CLIENT" } }),
         prisma.user.count({ where: { createdAt: { gte: yesterdayStart, lt: todayStart }, role: "CLIENT" } }),
-        prisma.post.count({ where: { status: "PUBLISHED" } }),
+        prisma.order.count({ where: { paymentStatus: "VERIFYING" } }),
+        prisma.order.count({ where: { paymentStatus: "REFUND_REQUESTED" } }),
     ]);
 
     const revT = Number(revenueToday._sum.total ?? 0);
@@ -71,7 +74,7 @@ async function fetchKpis() {
         orders: { value: ordersToday, delta: delta(ordersToday, ordersYesterday) },
         revenue: { value: revT, delta: delta(revT, revY) },
         clients: { value: clientsToday, delta: delta(clientsToday, clientsYesterday) },
-        posts: { value: postsPublished, delta: null },
+        todo: { toVerify, toRefund },
     };
 }
 
@@ -146,6 +149,7 @@ export default async function DashboardPage() {
     ]);
 
     const currency = settings.currency;
+    const { todo } = kpis;
 
     const formatAmount = (v: number) => formatCurrency(v, currency);
 
@@ -177,15 +181,26 @@ export default async function DashboardPage() {
                     icon={IconUsers}
                 />
                 <KpiCard
-                    label="Posts publiés"
-                    value={kpis.posts.value.toString()}
+                    label="À traiter"
+                    value={(todo.toVerify + todo.toRefund).toString()}
                     delta={null}
-                    icon={IconFileText}
+                    icon={IconChecklist}
+                    highlight={todo.toVerify + todo.toRefund > 0}
+                    footer={
+                        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs font-medium">
+                            <Link href="/dashboard/orders?payment=VERIFYING" className="text-muted-foreground hover:text-foreground">
+                                {todo.toVerify} virement{todo.toVerify > 1 ? "s" : ""} à vérifier
+                            </Link>
+                            <Link href="/dashboard/orders?payment=REFUND_REQUESTED" className="text-muted-foreground hover:text-foreground">
+                                {todo.toRefund} remboursement{todo.toRefund > 1 ? "s" : ""}
+                            </Link>
+                        </div>
+                    }
                 />
             </div>
 
             {/* Chart */}
-            <article className="rounded-xl border border-border bg-card p-5">
+            <article className="rounded-3xl border border-border bg-card p-5">
                 <header className="mb-4">
                     <h2 className="text-sm font-semibold">Revenus — 7 derniers jours</h2>
                 </header>
@@ -194,7 +209,7 @@ export default async function DashboardPage() {
 
             {/* Tables */}
             <div className="grid gap-4 lg:grid-cols-3">
-                <article className="lg:col-span-2 rounded-xl border border-border bg-card p-5">
+                <article className="lg:col-span-2 rounded-3xl border border-border bg-card p-5">
                     <header className="mb-4">
                         <h2 className="text-sm font-semibold">Dernières commandes</h2>
                     </header>
@@ -207,7 +222,7 @@ export default async function DashboardPage() {
                     />
                 </article>
 
-                <article className="rounded-xl border border-border bg-card p-5">
+                <article className="rounded-3xl border border-border bg-card p-5">
                     <header className="mb-4">
                         <h2 className="text-sm font-semibold">Top 5 produits</h2>
                     </header>

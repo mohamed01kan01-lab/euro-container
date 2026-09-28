@@ -161,7 +161,7 @@ export function CouponsTable({
                 </Button>
             </header>
 
-            <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="rounded-3xl border border-border bg-card overflow-hidden">
                 {coupons.length === 0 ? (
                     <EmptyState
                         icon={IconTicketOff}

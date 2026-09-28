@@ -76,7 +76,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
                     <PaymentPanel order={order} />
 
                     {/* Client */}
-                    <article className="rounded-xl border border-border bg-card p-4 space-y-3">
+                    <article className="rounded-3xl border border-border bg-card p-4 space-y-3">
                         <h2 className="text-sm font-semibold">Client</h2>
                         <p className="font-medium">{order.customerName}</p>
                         <dl className="space-y-1.5 text-sm text-muted-foreground">
@@ -114,7 +114,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
                     </article>
 
                     {/* Produits */}
-                    <article className="rounded-xl border border-border bg-card overflow-hidden">
+                    <article className="rounded-3xl border border-border bg-card overflow-hidden">
                         <h2 className="text-sm font-semibold p-4 pb-0">
                             Produits
                         </h2>
@@ -191,7 +191,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
                     </article>
 
                     {/* Timeline */}
-                    <article className="rounded-xl border border-border bg-card p-4 space-y-3">
+                    <article className="rounded-3xl border border-border bg-card p-4 space-y-3">
                         <h2 className="text-sm font-semibold">
                             Suivi de livraison
                         </h2>

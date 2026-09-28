@@ -1,27 +1,42 @@
-import type { ComponentType } from "react";
+import type { ComponentType, ReactNode } from "react";
 import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react";
+import { cn } from "@/lib/utils";
 
 interface KpiCardProps {
     label: string;
     value: string;
     delta: number | null;
     icon: ComponentType<{ size?: number; className?: string }>;
+    /** Carte mise en avant (accent orange), ex. éléments à traiter. */
+    highlight?: boolean;
+    footer?: ReactNode;
 }
 
-export function KpiCard({ label, value, delta, icon: Icon }: KpiCardProps) {
+export function KpiCard({ label, value, delta, icon: Icon, highlight, footer }: KpiCardProps) {
     const isUp = delta !== null && delta > 0;
     const isDown = delta !== null && delta < 0;
 
     return (
-        <article className="rounded-xl border border-border bg-card p-5 flex flex-col gap-3">
+        <article
+            className={cn(
+                "flex flex-col gap-3 rounded-3xl border p-5",
+                highlight ? "border-orange-600/40 bg-orange-600/5" : "border-border bg-card",
+            )}
+        >
             <header className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground font-medium">{label}</p>
-                <figure className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                    <Icon size={18} className="text-primary" />
+                <p className="text-sm font-medium text-muted-foreground">{label}</p>
+                <figure
+                    className={cn(
+                        "flex size-10 items-center justify-center rounded-full",
+                        highlight ? "bg-orange-600 text-white" : "bg-primary/10 text-primary",
+                    )}
+                >
+                    <Icon size={18} />
                 </figure>
             </header>
 
-            <p className="text-2xl font-bold tracking-tight">{value}</p>
+            <p className="font-heading text-3xl font-semibold tracking-tight">{value}</p>
+            {footer}
 
             {delta !== null && (
                 <footer className="flex items-center gap-1 text-xs font-medium">

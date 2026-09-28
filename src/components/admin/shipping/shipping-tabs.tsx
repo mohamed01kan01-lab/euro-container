@@ -115,7 +115,7 @@ export function ShippingTabs({ zones, points, currency }: ShippingTabsProps) {
                     </Button>
                 </header>
 
-                <div className="overflow-hidden rounded-xl border border-border bg-card">
+                <div className="overflow-hidden rounded-3xl border border-border bg-card">
                     {zones.length === 0 ? (
                         <p className="py-12 text-center text-sm text-muted-foreground">
                             Aucun secteur. Sans secteur actif, la livraison à
@@ -229,7 +229,7 @@ export function ShippingTabs({ zones, points, currency }: ShippingTabsProps) {
                     </Button>
                 </header>
 
-                <div className="overflow-hidden rounded-xl border border-border bg-card">
+                <div className="overflow-hidden rounded-3xl border border-border bg-card">
                     {points.length === 0 ? (
                         <p className="py-12 text-center text-sm text-muted-foreground">
                             Aucun point de retrait. Le retrait en magasin ne sera

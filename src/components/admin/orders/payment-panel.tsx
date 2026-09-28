@@ -132,7 +132,7 @@ export function PaymentPanel({ order }: { order: OrderDetail }) {
     const refundLike = dialog?.kind === "refund" || (dialog?.kind === "resolve" && dialog.outcome === "REFUNDED");
 
     return (
-        <article className="rounded-xl border border-border bg-card p-4 space-y-4">
+        <article className="rounded-3xl border border-border bg-card p-4 space-y-4">
             <header className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-sm font-semibold">Paiement</h2>
                 <Badge variant={PAYMENT_STATUS[status].variant}>{PAYMENT_STATUS[status].label}</Badge>

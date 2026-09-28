@@ -34,7 +34,7 @@ export function EmptyState({
             </span>
 
             <div className="space-y-1">
-                <p className="font-medium">{title}</p>
+                <p className="font-heading font-semibold">{title}</p>
                 {description && (
                     <p className="mx-auto max-w-sm text-sm text-muted-foreground">
                         {description}
