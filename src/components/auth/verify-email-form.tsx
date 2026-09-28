@@ -53,9 +53,9 @@ export function VerifyEmailForm() {
                 return;
             }
 
-            toast.success("Email vérifié ! Bienvenue sur NextPress.");
+            toast.success("Email vérifié ! Bienvenue.");
             // Navigation « dure » : voir le commentaire dans login-form.tsx.
-            window.location.assign("/dashboard");
+            window.location.assign("/account");
         } catch (err) {
             const message = getThrownErrorMessage(err);
             setServerError(message);

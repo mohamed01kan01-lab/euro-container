@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -30,9 +30,19 @@ export default function SignupPage() {
     const [serverError, setServerError] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
 
-    const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>({
+    const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormValues>({
         resolver: zodResolver(schema),
     });
+
+    // Arrivée depuis une page de commande (?email=&name=) : le client n'a plus
+    // qu'à choisir un mot de passe. Lu côté client pour ne pas imposer de
+    // frontière Suspense à useSearchParams sur cette page.
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const email = params.get("email");
+        const name = params.get("name");
+        if (email || name) reset({ email: email ?? "", name: name ?? "", password: "" });
+    }, [reset]);
 
     const onSubmit = async (values: FormValues) => {
         setServerError(null);
@@ -68,7 +78,7 @@ export default function SignupPage() {
         <section className="w-full bg-card rounded-2xl shadow-md p-6">
             <header className="mb-6">
                 <h1 className="text-xl font-semibold">Créer un compte</h1>
-                <p className="text-sm text-muted-foreground mt-1">Rejoignez NextPress gratuitement</p>
+                <p className="text-sm text-muted-foreground mt-1">Suivez vos commandes et commandez plus vite</p>
             </header>
 
             <form onSubmit={handleSubmit(onSubmit)} autoComplete="off" className="space-y-4">

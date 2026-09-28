@@ -238,6 +238,7 @@ export default async function ShopPage({ searchParams }: PageProps) {
                                 key={product.slug}
                                 product={product}
                                 currency={settings.currency}
+                                vatRate={settings.vatRate}
                             />
                         ))}
                     </div>

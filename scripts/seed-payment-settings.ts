@@ -2,7 +2,7 @@ import "dotenv/config";
 import { prisma } from "@/lib/prisma";
 
 /**
- * Coordonnées de paiement FICTIVES, en attendant les vraies.
+ * Coordonnées de paiement et informations légales FICTIVES, en attendant les vraies.
  * L'IBAN est l'exemple officiel français : clé mod-97 valide, aucun compte réel.
  * Les clés Stripe ne sont pas touchées (elles viennent du compte Stripe de test).
  *
@@ -24,6 +24,19 @@ async function main() {
         paymentDueDays: 7,
         bankTransferDetails:
             "Les virements SEPA arrivent généralement sous 1 à 2 jours ouvrés. Pensez à indiquer la référence de commande.",
+        // Informations légales FICTIVES (SIRET et TVA inventés).
+        vatRate: 20,
+        legalName: "Euro Container Market",
+        legalForm: "SAS",
+        legalCapital: "10 000 €",
+        legalSiret: "000 000 000 00000",
+        legalRcs: "RCS Le Havre",
+        legalVatNumber: "FR00000000000",
+        legalAddress: "12 rue des Docks, 76600 Le Havre, France",
+        publicationDirector: "Prénom Nom (fictif)",
+        hostInfo: "Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis — vercel.com",
+        mediatorName: "Médiateur fictif à renseigner",
+        mediatorUrl: "https://www.economie.gouv.fr/mediation-conso",
     };
 
     const settings = await prisma.siteSettings.upsert({

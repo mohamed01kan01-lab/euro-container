@@ -4,7 +4,7 @@ import { Link } from "@/i18n/routing";
 import { IconChevronRight } from "@tabler/icons-react";
 import { prisma } from "@/lib/prisma";
 import { getSiteSettings } from "@/app/(admin)/dashboard/settings/actions";
-import { formatPrice } from "@/lib/currency";
+import { PriceTag } from "@/components/public/price-tag";
 import { getRatingMap } from "@/lib/ratings";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -220,28 +220,18 @@ export default async function ProductPage({ params }: PageProps) {
                             </a>
                         )}
 
-                        <div className="flex flex-wrap items-baseline gap-3">
-                            <span
-                                className={
-                                    onSale
-                                        ? "font-display text-3xl text-orange-600 dark:text-orange-400"
-                                        : "font-display text-3xl"
-                                }
-                            >
-                                {formatPrice(
-                                    onSale ? promoPrice : price,
-                                    currency,
-                                )}
-                            </span>
+                        <div className="flex flex-wrap items-start gap-3">
+                            <PriceTag
+                                size="lg"
+                                ht={onSale ? promoPrice : price}
+                                compareAtHt={onSale ? price : null}
+                                currency={currency}
+                                vatRate={settings.vatRate}
+                            />
                             {onSale && (
-                                <>
-                                    <s className="text-lg text-muted-foreground">
-                                        {formatPrice(price, currency)}
-                                    </s>
-                                    <Badge className="rounded-full bg-orange-600 text-white">
-                                        −{discount} %
-                                    </Badge>
-                                </>
+                                <Badge className="mt-2 rounded-full bg-orange-600 text-white">
+                                    −{discount} %
+                                </Badge>
                             )}
                         </div>
 
@@ -326,6 +316,7 @@ export default async function ProductPage({ params }: PageProps) {
                                 key={p.slug}
                                 product={p}
                                 currency={currency}
+                                vatRate={settings.vatRate}
                             />
                         ))}
                     </div>

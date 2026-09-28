@@ -11,8 +11,13 @@ import { validateCoupon } from "@/lib/coupon";
 import { getSiteSettings } from "@/app/(admin)/dashboard/settings/actions";
 import { availablePaymentMethods } from "@/lib/payment";
 import { generateOrderReference } from "@/lib/order-reference";
+import { taxOf } from "@/lib/tax";
 import { defer, startCardPayment } from "@/lib/order-payment";
-import { notifyAdmin, sendOrderReceivedEmail } from "@/lib/order-emails";
+import {
+    notifyAdmin,
+    sendOrderReceivedEmail,
+    sendOrderReservedEmail,
+} from "@/lib/order-emails";
 
 const schema = z.object({
     checkoutKey: z.uuid(),
@@ -20,7 +25,15 @@ const schema = z.object({
     customerName: z.string().trim().min(2, { message: "Votre nom est requis" }),
     customerEmail: z.email({ error: "Email invalide" }),
     customerPhone: z.string().trim().min(6, { message: "Un téléphone est requis pour organiser la livraison" }),
-    company: z.string().trim().optional(),
+    company: z.string().trim().max(120).optional(),
+    vatNumber: z
+        .string()
+        .trim()
+        .max(20)
+        .refine((v) => !v || /^[A-Z]{2}[A-Z0-9]{2,13}$/i.test(v.replace(/\s+/g, "")), {
+            message: "Numéro de TVA intracommunautaire invalide (ex. FR12345678901)",
+        })
+        .optional(),
     shippingMethod: z.enum(["DELIVERY", "PICKUP"]),
     shippingZoneId: z.string().optional(),
     pickupPointId: z.string().optional(),
@@ -82,6 +95,9 @@ export async function placeOrder(input: CheckoutInput): Promise<PlaceOrderResult
             return { ok: true, orderNumber: order.orderNumber };
         }
 
+        // Carte : si le client ferme l'onglet Stripe, cet email est son seul
+        // chemin de retour vers la commande.
+        defer("email commande enregistrée", () => sendOrderReservedEmail(order.id));
         return resume(
             { ...order, paymentMethod: "STRIPE", paymentStatus: "PENDING" },
             data.locale,
@@ -183,6 +199,7 @@ async function createOrder(data: z.output<typeof schema>) {
         };
     }
     if (data.company) addressJson.company = data.company;
+    if (data.company && data.vatNumber) addressJson.vatNumber = data.vatNumber.replace(/\s+/g, "").toUpperCase();
 
     // ─── Coupon : revalidé, jamais repris du panier ───────────────────────────
     let couponId: string | null = null;
@@ -205,12 +222,16 @@ async function createOrder(data: z.output<typeof schema>) {
         }
     }
 
+    // Tous les montants sont HT ; la TVA porte sur le total HT (articles
+    // remisés + livraison) et le client paie le TTC.
     const subtotal = cart.subtotal;
-    const total = Math.max(0, subtotal - discount) + shippingCost;
-    const paymentDueAt =
-        data.paymentMethod === "BANK_TRANSFER"
-            ? new Date(Date.now() + settings.paymentDueDays * 24 * 60 * 60 * 1000)
-            : null;
+    const totalHt = Math.max(0, subtotal - discount) + shippingCost;
+    const taxRate = settings.vatRate;
+    const taxAmount = taxOf(totalHt, taxRate);
+    const total = Math.round((totalHt + taxAmount) * 100) / 100;
+    // Même délai pour carte et virement : il borne la réservation du stock, les
+    // relances et l'éventuelle annulation automatique.
+    const paymentDueAt = new Date(Date.now() + settings.paymentDueDays * 24 * 60 * 60 * 1000);
 
     // ─── Écriture atomique ────────────────────────────────────────────────────
     return prisma.$transaction(async (tx) => {
@@ -252,6 +273,8 @@ async function createOrder(data: z.output<typeof schema>) {
                 subtotal,
                 shippingCost,
                 discount,
+                taxRate,
+                taxAmount,
                 total,
                 currency: settings.currency,
                 paymentStatus: "PENDING",

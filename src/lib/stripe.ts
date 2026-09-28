@@ -35,6 +35,8 @@ interface SessionOrder {
     total: number;
     discount: number;
     shippingCost: number;
+    taxRate: number;
+    taxAmount: number;
     items: { name: string; price: number; quantity: number }[];
 }
 
@@ -88,6 +90,19 @@ export async function createCheckoutSession(
                                     currency,
                                     unit_amount: toCents(order.shippingCost),
                                     product_data: { name: "Livraison" },
+                                },
+                            },
+                        ]
+                      : []),
+                  // Lignes HT + une ligne TVA : leur somme vaut exactement order.total (TTC).
+                  ...(order.taxAmount > 0
+                      ? [
+                            {
+                                quantity: 1,
+                                price_data: {
+                                    currency,
+                                    unit_amount: toCents(order.taxAmount),
+                                    product_data: { name: `TVA ${order.taxRate} %` },
                                 },
                             },
                         ]

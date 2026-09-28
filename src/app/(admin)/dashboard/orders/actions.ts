@@ -14,17 +14,15 @@ import { getSiteSettings } from "@/app/(admin)/dashboard/settings/actions";
 import { getStripe } from "@/lib/stripe";
 import { decryptIban } from "@/lib/security/iban";
 import { formatIban } from "@/lib/bank";
-import { signedProofUrl } from "@/lib/payment-proofs";
+import { signedProofPreviewUrl, signedProofUrl } from "@/lib/payment-proofs";
+import { sendManualReminder } from "@/lib/payment-reminders";
 import {
     cancelOrder,
     defer,
     markOrderPaid,
     restockOrder,
 } from "@/lib/order-payment";
-import {
-    sendOrderReceivedEmail,
-    sendRefundResolvedEmail,
-} from "@/lib/order-emails";
+import { sendRefundResolvedEmail } from "@/lib/order-emails";
 
 // ─── Garde ────────────────────────────────────────────────────────────────────
 
@@ -77,6 +75,8 @@ export interface OrderDetail {
     subtotal: number;
     shippingCost: number;
     discount: number;
+    taxRate: number;
+    taxAmount: number;
     total: number;
     currency: string;
     paymentStatus: PaymentStatus;
@@ -85,6 +85,8 @@ export interface OrderDetail {
     paymentDueAt: Date | null;
     paidAt: Date | null;
     cancelledAt: Date | null;
+    paymentReminderCount: number;
+    lastPaymentReminderAt: Date | null;
     shippingStatus: ShippingStatus;
     shippingMethod: ShippingMethod;
     trackingNumber: string | null;
@@ -212,6 +214,8 @@ export async function getOrder(id: string): Promise<OrderDetail | null> {
         subtotal: Number(order.subtotal),
         shippingCost: Number(order.shippingCost),
         discount: Number(order.discount),
+        taxRate: Number(order.taxRate),
+        taxAmount: Number(order.taxAmount),
         total: Number(order.total),
         currency: order.currency,
         paymentStatus: order.paymentStatus,
@@ -220,6 +224,8 @@ export async function getOrder(id: string): Promise<OrderDetail | null> {
         paymentDueAt: order.paymentDueAt,
         paidAt: order.paidAt,
         cancelledAt: order.cancelledAt,
+        paymentReminderCount: order.paymentReminderCount,
+        lastPaymentReminderAt: order.lastPaymentReminderAt,
         shippingStatus: order.shippingStatus,
         shippingMethod: order.shippingMethod,
         trackingNumber: order.trackingNumber,
@@ -332,31 +338,35 @@ export async function adminCancelOrder(
     return { ok: true };
 }
 
-/** Renvoie au client l'email contenant le RIB (commande par virement non payée). */
-export async function resendPaymentEmail(id: string): Promise<AdminResult> {
+/**
+ * Relance manuelle d'une commande impayée : RIB pour un virement, lien de
+ * reprise pour une carte. Comptée avec les relances automatiques.
+ */
+export async function remindCustomer(id: string): Promise<AdminResult> {
     await requireAdmin();
-    const order = await prisma.order.findUnique({
-        where: { id },
-        select: { paymentMethod: true, paymentStatus: true },
-    });
-    if (!order) return { ok: false, error: "Commande introuvable." };
-    if (order.paymentMethod !== "BANK_TRANSFER" || !["PENDING", "FAILED"].includes(order.paymentStatus)) {
-        return { ok: false, error: "Seule une commande par virement en attente peut recevoir le RIB." };
-    }
     try {
-        await sendOrderReceivedEmail(id);
-        return { ok: true };
+        const sent = await sendManualReminder(id);
+        revalidate(id);
+        return sent
+            ? { ok: true }
+            : { ok: false, error: "Seule une commande impayée (carte ou virement) peut être relancée." };
     } catch (err) {
         return { ok: false, error: err instanceof Error ? err.message : "Envoi impossible." };
     }
 }
 
-export async function getProofUrl(proofId: string): Promise<AdminResult<{ url: string }>> {
+export async function getProofUrls(
+    proofId: string,
+): Promise<AdminResult<{ previewUrl: string; downloadUrl: string; isPdf: boolean }>> {
     await requireAdmin();
     const proof = await prisma.paymentProof.findUnique({ where: { id: proofId } });
     if (!proof) return { ok: false, error: "Justificatif introuvable." };
     try {
-        return { ok: true, url: await signedProofUrl(proof.publicId, proof.format) };
+        const [previewUrl, downloadUrl] = await Promise.all([
+            signedProofPreviewUrl(proof.publicId, proof.format),
+            signedProofUrl(proof.publicId, proof.format),
+        ]);
+        return { ok: true, previewUrl, downloadUrl, isPdf: proof.format === "pdf" };
     } catch (err) {
         return { ok: false, error: err instanceof Error ? err.message : "Lien indisponible." };
     }

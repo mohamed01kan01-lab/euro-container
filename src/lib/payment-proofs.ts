@@ -44,6 +44,21 @@ export async function uploadPaymentProof(
     });
 }
 
+/**
+ * URL de diffusion signée, affichable directement (balise img ou iframe) pour
+ * l'aperçu dans le dashboard. Elle n'est générée que pour un administrateur.
+ */
+export async function signedProofPreviewUrl(publicId: string, format: string | null) {
+    await configure();
+    return cloudinary.url(publicId, {
+        type: "authenticated",
+        resource_type: "image",
+        sign_url: true,
+        secure: true,
+        ...(format && { format }),
+    });
+}
+
 /** URL de téléchargement signée, valable 10 minutes. */
 export async function signedProofUrl(publicId: string, format: string | null) {
     await configure();

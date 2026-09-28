@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
-import { formatPrice } from "@/lib/currency";
 import type { ProductRating } from "@/lib/ratings";
+import { PriceTag } from "./price-tag";
 import { RatingStars } from "./rating-stars";
 import { QuickAddButton } from "./quick-add-button";
 
@@ -28,9 +28,11 @@ export interface ProductCardData {
 export async function ProductCard({
     product,
     currency,
+    vatRate,
 }: {
     product: ProductCardData;
     currency: string;
+    vatRate: number;
 }) {
     const t = await getTranslations("common");
     const mainCategory = product.categories[0];
@@ -117,25 +119,13 @@ export async function ProductCard({
                     </p>
                 )}
 
-                <p className="mt-auto flex items-baseline gap-2 pt-2">
-                    <span
-                        className={
-                            onSale
-                                ? "font-display text-lg text-orange-600 dark:text-orange-400"
-                                : "font-display text-lg"
-                        }
-                    >
-                        {formatPrice(
-                            onSale ? product.promoPrice! : product.price,
-                            currency,
-                        )}
-                    </span>
-                    {onSale && (
-                        <s className="text-xs text-muted-foreground">
-                            {formatPrice(product.price, currency)}
-                        </s>
-                    )}
-                </p>
+                <PriceTag
+                    className="mt-auto pt-2"
+                    ht={onSale ? product.promoPrice! : product.price}
+                    compareAtHt={onSale ? product.price : null}
+                    currency={currency}
+                    vatRate={vatRate}
+                />
             </div>
         </article>
     );

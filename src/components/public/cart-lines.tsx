@@ -89,13 +89,14 @@ export function CartLines({ lines, currency }: CartLinesProps) {
                                     </p>
                                 )}
                                 <p className="mt-0.5 text-xs text-muted-foreground">
-                                    {formatPrice(line.unitPrice, currency)}{" "}
+                                    {formatPrice(line.unitPrice, currency)} HT
                                     l&apos;unité
                                 </p>
                             </div>
 
                             <p className="whitespace-nowrap font-display text-base">
                                 {formatPrice(line.lineTotal, currency)}
+                                <span className="ml-1 font-sans text-xs text-muted-foreground">HT</span>
                             </p>
                         </div>
 

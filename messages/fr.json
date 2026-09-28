@@ -11,9 +11,12 @@
         "loginAria": "Se connecter",
         "accountAria": "Mon compte",
         "dashboard": "Tableau de bord",
+        "myOrders": "Mes commandes",
         "logout": "Se déconnecter",
         "themeLight": "Passer en mode clair",
-        "themeDark": "Passer en mode sombre"
+        "themeDark": "Passer en mode sombre",
+        "myAccount": "Mon compte",
+        "awaitingPayment": "{count, plural, one {# commande en attente de paiement} other {# commandes en attente de paiement}}"
     },
     "footer": {
         "copyright": "© {year} {siteName}",
@@ -26,7 +29,9 @@
         "navTitle": "Navigation",
         "legalTitle": "Informations",
         "contactTitle": "Contact",
-        "followTitle": "Suivez-nous"
+        "followTitle": "Suivez-nous",
+        "legal": "Mentions légales",
+        "privacy": "Confidentialité"
     },
     "common": {
         "conditionNew": "Neuf",
@@ -63,7 +68,13 @@
         "trustDelivery": "Livraison & transport",
         "trustDeliveryDesc": "Acheminement organisé partout où votre projet vous mène.",
         "deliveryEyebrow": "Couverture",
-        "deliveryZones": ["France", "Belgique", "Allemagne", "Espagne", "Luxembourg"],
+        "deliveryZones": [
+            "France",
+            "Belgique",
+            "Allemagne",
+            "Espagne",
+            "Luxembourg"
+        ],
         "blogEyebrow": "Actualités",
         "blogTitle": "Actualités",
         "blogCta": "Voir le blog",
@@ -142,40 +153,441 @@
     },
     "faq": {
         "title": "Questions fréquentes",
-        "intro": "Les réponses aux questions les plus courantes sur nos conteneurs, la livraison et les commandes.",
-        "items": [
+        "intro": "Commande, paiement, livraison, rétractation : toutes les réponses pour acheter votre conteneur en confiance.",
+        "contactTitle": "Vous ne trouvez pas votre réponse ?",
+        "contactText": "Notre équipe vous répond rapidement, par téléphone ou par email.",
+        "contactCta": "Nous contacter",
+        "categories": [
             {
-                "question": "Quelle est la différence entre un conteneur neuf et un conteneur d'occasion ?",
-                "answer": "Un conteneur neuf n'a jamais servi au transport maritime. Un conteneur d'occasion a déjà été utilisé mais est systématiquement inspecté et remis en état avant la vente."
+                "title": "Commande et paiement",
+                "items": [
+                    {
+                        "question": "Comment passer commande ?",
+                        "answer": "Ajoutez le conteneur à votre panier, indiquez vos coordonnées et votre mode de livraison, puis choisissez de payer par carte bancaire ou par virement. Vous recevez aussitôt un email avec votre numéro de commande (format EC-XXXXXXXX) et le lien pour la suivre."
+                    },
+                    {
+                        "question": "Vos prix sont-ils HT ou TTC ?",
+                        "answer": "Nos prix sont affichés hors taxes (HT), avec le prix TTC juste en dessous. La TVA de {vat} % est calculée à la commande sur le total, livraison comprise, et apparaît en détail dans votre récapitulatif et vos emails."
+                    },
+                    {
+                        "question": "Quels moyens de paiement acceptez-vous ?",
+                        "answer": "La carte bancaire (CB, Visa, Mastercard, Apple Pay, Google Pay) via notre prestataire de paiement sécurisé Stripe, et le virement bancaire. Le paiement par carte confirme votre commande immédiatement."
+                    },
+                    {
+                        "question": "Le paiement par carte est-il sécurisé ?",
+                        "answer": "Oui. Vous saisissez votre carte sur la page de paiement de Stripe, certifiée PCI-DSS niveau 1 : vos données bancaires ne transitent jamais par notre site et nous n'y avons pas accès. Votre banque peut vous demander une validation 3D Secure."
+                    },
+                    {
+                        "question": "Mon paiement par carte n'a pas abouti, que faire ?",
+                        "answer": "Rien n'a été débité et votre commande reste réservée. Ouvrez-la depuis l'email reçu ou depuis « Mes commandes » : vous pouvez relancer le paiement en un clic, ou choisir de payer par virement."
+                    }
+                ]
             },
             {
-                "question": "Livrez-vous partout en Europe ?",
-                "answer": "Oui, nous organisons la livraison dans la plupart des pays européens. Le délai et le coût dépendent de la destination et sont indiqués avant validation de la commande."
+                "title": "Paiement par virement",
+                "items": [
+                    {
+                        "question": "Comment payer par virement ?",
+                        "answer": "Dès la commande validée, la page de votre commande et votre email de confirmation affichent le RIB complet (bénéficiaire, IBAN, BIC, banque) et le montant exact. Chaque information se copie d'un clic, et un QR code vous permet de pré-remplir le virement depuis votre application bancaire."
+                    },
+                    {
+                        "question": "Quelle référence indiquer dans mon virement ?",
+                        "answer": "Votre numéro de commande, au format EC-XXXXXXXX. Il nous permet d'identifier votre paiement sans délai."
+                    },
+                    {
+                        "question": "Combien de temps ma commande est-elle réservée ?",
+                        "answer": "{days} jours à compter de la commande. Nous vous envoyons un rappel avant l'échéance. Sans paiement dans ce délai, la commande peut être annulée et le conteneur remis en vente : vous en êtes alors informé par email."
+                    },
+                    {
+                        "question": "Comment envoyer ma preuve de virement ?",
+                        "answer": "Sur la page de votre commande, cliquez sur « J'ai effectué le virement ». Vous pouvez y joindre la capture ou le PDF fourni par votre banque (PDF, JPG, PNG ou WEBP, 5 Mo maximum). La preuve est facultative, mais elle accélère la validation."
+                    },
+                    {
+                        "question": "Quand ma commande est-elle confirmée ?",
+                        "answer": "Dès que les fonds apparaissent sur notre compte : en général 1 à 2 jours ouvrés pour un virement SEPA, quelques secondes pour un virement instantané. Vous recevez alors un email de confirmation et la préparation démarre."
+                    },
+                    {
+                        "question": "Je paie depuis un pays hors zone euro, comment faire ?",
+                        "answer": "Effectuez un virement international (SWIFT) : le BIC ainsi que les adresses de la banque et du bénéficiaire figurent dans le détail « Virement international » de votre commande. Les éventuels frais d'envoi facturés par votre banque restent à votre charge : le montant reçu doit correspondre au total de la commande."
+                    }
+                ]
             },
             {
-                "question": "Puis-je faire modifier un conteneur (fenêtres, isolation, électricité) ?",
-                "answer": "Oui, nous proposons des conteneurs déjà modifiés (bureau, bar, piscine, logement) et pouvons étudier des demandes de personnalisation spécifiques."
+                "title": "Livraison et retrait",
+                "items": [
+                    {
+                        "question": "Où livrez-vous et dans quels délais ?",
+                        "answer": "Nous livrons en France et dans plusieurs pays européens. Les secteurs de livraison, leurs tarifs et leurs délais estimés s'affichent au moment de la commande, avant tout paiement. Le délai court à partir de la confirmation du paiement."
+                    },
+                    {
+                        "question": "Comment se déroule la livraison ?",
+                        "answer": "Le conteneur est livré par camion, avec un moyen de déchargement adapté (camion plateau, grue ou bras de manutention selon le cas). Nous vous appelons avant l'expédition pour convenir du créneau et vérifier les conditions d'accès."
+                    },
+                    {
+                        "question": "Que dois-je prévoir sur place ?",
+                        "answer": "Un accès praticable pour un poids lourd, un sol plan et stable, et un espace dégagé suffisant pour la manœuvre et la dépose. Nous vous indiquons les dimensions nécessaires lors de notre appel. Précisez toute contrainte (portail, pente, lignes électriques) dans la note de commande."
+                    },
+                    {
+                        "question": "Puis-je retirer mon conteneur moi-même ?",
+                        "answer": "Oui, au dépôt et sur rendez-vous. Prévoyez un véhicule adapté au transport d'un conteneur ; le chargement est assuré sur place."
+                    }
+                ]
             },
             {
-                "question": "Quels sont les délais de livraison ?",
-                "answer": "Les délais varient selon le type de conteneur, sa disponibilité et la destination. Une estimation précise est communiquée lors de la commande."
+                "title": "Nos conteneurs",
+                "items": [
+                    {
+                        "question": "Quelle différence entre un conteneur neuf et d'occasion ?",
+                        "answer": "Un conteneur neuf (ou « one trip ») n'a pas ou très peu servi au transport maritime. Un conteneur d'occasion a déjà été utilisé : il est inspecté avant la vente et son état est décrit sur la fiche produit."
+                    },
+                    {
+                        "question": "Puis-je voir le conteneur avant de l'acheter ?",
+                        "answer": "Contactez-nous : nous pouvons vous envoyer des photos supplémentaires ou organiser une visite au dépôt."
+                    },
+                    {
+                        "question": "Proposez-vous des conteneurs modifiés ?",
+                        "answer": "Oui : bureaux, locaux de stockage aménagés, bars, logements, piscines… Nous étudions aussi vos demandes de personnalisation (fenêtres, isolation, électricité) sur devis."
+                    },
+                    {
+                        "question": "Proposez-vous la location ?",
+                        "answer": "Contactez notre équipe pour étudier une solution de location adaptée à votre projet et à sa durée."
+                    }
+                ]
             },
             {
-                "question": "Proposez-vous la location de conteneurs ?",
-                "answer": "Contactez notre équipe pour étudier les options de location adaptées à votre projet et sa durée."
+                "title": "Annulation, rétractation et remboursement",
+                "items": [
+                    {
+                        "question": "Puis-je annuler ma commande ?",
+                        "answer": "Tant qu'aucun paiement n'a été reçu, oui : depuis la page de votre commande, « Annuler ma commande », l'annulation est gratuite et immédiate. Après paiement, faites une demande de remboursement depuis la même page."
+                    },
+                    {
+                        "question": "Ai-je un droit de rétractation ?",
+                        "answer": "Si vous êtes un particulier, vous disposez de 14 jours à compter de la réception du conteneur pour vous rétracter, sans avoir à vous justifier. Les frais de retour restent à votre charge : nous vous communiquons un devis de reprise. Le droit de rétractation ne s'applique pas aux conteneurs modifiés ou fabriqués selon vos spécifications. Les achats professionnels n'ouvrent pas droit à rétractation."
+                    },
+                    {
+                        "question": "Comment suis-je remboursé ?",
+                        "answer": "Un paiement par carte est remboursé sur la carte utilisée. Un virement est remboursé sur le compte que vous indiquez dans le formulaire de demande (votre IBAN y est chiffré). Le remboursement intervient au plus tard 14 jours après validation de la demande ; votre banque peut ensuite mettre 1 à 5 jours ouvrés à l'afficher."
+                    },
+                    {
+                        "question": "Le conteneur est arrivé endommagé, que faire ?",
+                        "answer": "Notez des réserves précises sur le bon de livraison en présence du chauffeur, prenez des photos et contactez-nous sous 48 heures. Vous bénéficiez en outre de la garantie légale de conformité et de la garantie des vices cachés."
+                    }
+                ]
+            },
+            {
+                "title": "Suivi et compte client",
+                "items": [
+                    {
+                        "question": "Dois-je créer un compte pour commander ?",
+                        "answer": "Non, vous pouvez commander en invité. Un compte vous permet de retrouver toutes vos commandes, de finaliser un paiement en un clic et de ne plus ressaisir vos coordonnées."
+                    },
+                    {
+                        "question": "Comment suivre ma commande ?",
+                        "answer": "Via le lien présent dans chacun de nos emails, depuis votre compte, ou sur la page « Mes commandes » avec votre numéro de commande et votre email."
+                    },
+                    {
+                        "question": "Je n'ai pas reçu l'email de confirmation.",
+                        "answer": "Vérifiez vos courriers indésirables. Vous pouvez aussi retrouver votre commande depuis « Mes commandes » avec votre numéro et votre email, ou nous contacter."
+                    }
+                ]
+            },
+            {
+                "title": "Professionnels",
+                "items": [
+                    {
+                        "question": "Puis-je commander au nom de ma société ?",
+                        "answer": "Oui : au moment de la commande, cliquez sur « J'achète pour une société » et renseignez sa raison sociale et, le cas échéant, son numéro de TVA intracommunautaire. Ils figureront sur votre facture."
+                    },
+                    {
+                        "question": "Recevrai-je une facture ?",
+                        "answer": "Oui, une facture vous est adressée après confirmation du paiement."
+                    },
+                    {
+                        "question": "Mon entreprise est établie dans un autre pays de l'UE.",
+                        "answer": "Si vous disposez d'un numéro de TVA intracommunautaire valide, contactez-nous avant de commander : la vente peut être facturée hors taxes en autoliquidation."
+                    },
+                    {
+                        "question": "Proposez-vous des tarifs pour plusieurs conteneurs ?",
+                        "answer": "Oui, contactez-nous pour un devis personnalisé en cas de commande de plusieurs unités ou de projet récurrent."
+                    }
+                ]
             }
         ]
     },
-    "returns": {
-        "title": "Politique de retours",
-        "body": "Chaque conteneur est inspecté avant expédition. En cas de non-conformité constatée à la livraison, contactez-nous sous 48 heures avec des photos à l'appui : nous étudierons un retour, un échange ou un geste commercial selon la situation."
-    },
-    "shipping": {
-        "title": "Livraison",
-        "body": "Le transport est organisé par nos soins vers la destination indiquée à la commande. Les délais et frais de livraison dépendent du type de conteneur, de la quantité et de la localisation, et sont communiqués avant validation de la commande."
-    },
-    "terms": {
-        "title": "Conditions générales de vente",
-        "body": "Les présentes conditions régissent les ventes de conteneurs réalisées sur ce site. Pour toute question relative à une commande en cours ou à ces conditions, notre équipe reste à votre disposition."
+    "legal": {
+        "todo": "[à compléter]",
+        "updated": "Dernière mise à jour : septembre 2026",
+        "draftNotice": "Document type à faire valider par un professionnel du droit.",
+        "notice": {
+            "title": "Mentions légales",
+            "sections": [
+                {
+                    "title": "Éditeur du site",
+                    "paragraphs": [
+                        "Le site {siteName} est édité par {company}, {legalForm} au capital de {capital}, immatriculée au {rcs} sous le numéro SIRET {siret}, dont le siège social est situé {address}.",
+                        "Numéro de TVA intracommunautaire : {vatNumber}.",
+                        "Contact : {email} · {phone}."
+                    ]
+                },
+                {
+                    "title": "Directeur de la publication",
+                    "paragraphs": [
+                        "{director}"
+                    ]
+                },
+                {
+                    "title": "Hébergement",
+                    "paragraphs": [
+                        "{host}"
+                    ]
+                },
+                {
+                    "title": "Propriété intellectuelle",
+                    "paragraphs": [
+                        "L'ensemble des contenus de ce site (textes, photographies, logos, graphismes) est protégé par le droit de la propriété intellectuelle. Toute reproduction, même partielle, sans autorisation écrite préalable de {company} est interdite."
+                    ]
+                },
+                {
+                    "title": "Données personnelles",
+                    "paragraphs": [
+                        "Le traitement de vos données personnelles est décrit dans notre politique de confidentialité."
+                    ]
+                }
+            ]
+        },
+        "privacy": {
+            "title": "Politique de confidentialité",
+            "sections": [
+                {
+                    "title": "Responsable du traitement",
+                    "paragraphs": [
+                        "{company}, {address}. Pour toute question relative à vos données : {email}."
+                    ]
+                },
+                {
+                    "title": "Données collectées",
+                    "list": [
+                        "Identité et contact : nom, email, téléphone, société et numéro de TVA le cas échéant.",
+                        "Livraison : adresse et informations d'accès que vous nous communiquez.",
+                        "Commandes et paiements : contenu des commandes, montants, justificatifs de virement que vous choisissez d'envoyer, IBAN fourni pour un remboursement (conservé chiffré).",
+                        "Compte client : identifiants de connexion (le mot de passe est stocké sous forme chiffrée irréversible).",
+                        "Données techniques strictement nécessaires : cookies de session, de panier et de préférences d'affichage."
+                    ]
+                },
+                {
+                    "title": "Finalités et bases légales",
+                    "list": [
+                        "Traiter vos commandes, paiements, livraisons et remboursements : exécution du contrat.",
+                        "Vous envoyer les emails liés à vos commandes (confirmation, rappels de paiement, suivi) : exécution du contrat.",
+                        "Répondre à vos messages : intérêt légitime.",
+                        "Conserver les pièces comptables : obligation légale."
+                    ]
+                },
+                {
+                    "title": "Destinataires",
+                    "paragraphs": [
+                        "Vos données ne sont jamais vendues. Elles sont accessibles à notre équipe et à nos sous-traitants, dans la limite de leur mission :"
+                    ],
+                    "list": [
+                        "Stripe (paiement par carte) : vos données de carte sont saisies et traitées directement par Stripe.",
+                        "Resend (envoi des emails).",
+                        "Cloudinary (stockage sécurisé des justificatifs de virement).",
+                        "Vercel (hébergement du site).",
+                        "Nos transporteurs, pour la livraison.",
+                        "Google, uniquement si vous choisissez d'afficher une carte (Google Maps)."
+                    ]
+                },
+                {
+                    "title": "Transferts hors de l'Union européenne",
+                    "paragraphs": [
+                        "Certains prestataires sont situés aux États-Unis. Ces transferts sont encadrés par le Data Privacy Framework UE–États-Unis ou par les clauses contractuelles types de la Commission européenne."
+                    ]
+                },
+                {
+                    "title": "Durées de conservation",
+                    "list": [
+                        "Données de commande et factures : 10 ans (obligation comptable).",
+                        "Compte client : jusqu'à sa suppression, ou 3 ans après votre dernière activité.",
+                        "Justificatifs de virement et IBAN de remboursement : le temps du traitement de la commande, puis archivage comptable.",
+                        "Messages de contact : 3 ans."
+                    ]
+                },
+                {
+                    "title": "Vos droits",
+                    "paragraphs": [
+                        "Vous disposez d'un droit d'accès, de rectification, d'effacement, de limitation, d'opposition et de portabilité de vos données. Vous pouvez supprimer votre compte à tout moment depuis « Mon compte », ou exercer vos droits en écrivant à {email}.",
+                        "Vous pouvez également introduire une réclamation auprès de la CNIL (www.cnil.fr)."
+                    ]
+                },
+                {
+                    "title": "Cookies",
+                    "paragraphs": [
+                        "Ce site n'utilise que des cookies strictement nécessaires à son fonctionnement (session, panier, langue, thème), qui ne requièrent pas de consentement. Les cartes Google Maps ne sont chargées que si vous cliquez sur « Afficher la carte » : Google peut alors déposer ses propres cookies."
+                    ]
+                }
+            ]
+        },
+        "terms": {
+            "title": "Conditions générales de vente",
+            "sections": [
+                {
+                    "title": "1. Objet et champ d'application",
+                    "paragraphs": [
+                        "Les présentes conditions générales de vente (CGV) régissent les ventes de conteneurs et prestations associées conclues sur le site {siteName} entre {company} (le « Vendeur ») et tout acheteur, particulier (« Consommateur ») ou professionnel (« Client professionnel »).",
+                        "Toute commande emporte acceptation des CGV en vigueur au jour de la commande. Les dispositions propres aux Consommateurs (rétractation, garanties légales, médiation) ne s'appliquent pas aux Clients professionnels."
+                    ]
+                },
+                {
+                    "title": "2. Produits",
+                    "paragraphs": [
+                        "Les caractéristiques essentielles de chaque conteneur (dimensions, état neuf ou d'occasion, équipements) sont décrites sur sa fiche produit. Les photographies des conteneurs d'occasion sont les plus fidèles possible ; de légères différences d'aspect (traces, rayures, patine) sont inhérentes à un matériel ayant servi."
+                    ]
+                },
+                {
+                    "title": "3. Prix",
+                    "paragraphs": [
+                        "Les prix sont indiqués en euros hors taxes (HT) ; le prix toutes taxes comprises (TTC) est affiché à côté. La TVA au taux en vigueur ({vat} %) est appliquée au total de la commande, frais de livraison compris.",
+                        "Les frais de livraison dépendent du secteur choisi et sont indiqués avant la validation de la commande. Le prix applicable est celui affiché au moment de la commande."
+                    ]
+                },
+                {
+                    "title": "4. Commande",
+                    "paragraphs": [
+                        "L'acheteur sélectionne ses produits, renseigne ses coordonnées et son mode de livraison, choisit son moyen de paiement puis valide sa commande en cliquant sur le bouton « Payer » ou « Commander et payer par virement », qui vaut commande avec obligation de paiement.",
+                        "Un email de confirmation récapitulant la commande est adressé à l'acheteur. Le Vendeur se réserve le droit d'annuler une commande en cas de litige de paiement antérieur, d'erreur manifeste de prix ou d'indisponibilité ; l'acheteur est alors intégralement remboursé."
+                    ]
+                },
+                {
+                    "title": "5. Paiement",
+                    "paragraphs": [
+                        "Le paiement s'effectue par carte bancaire, via le prestataire sécurisé Stripe, ou par virement bancaire.",
+                        "En cas de paiement par virement, la commande est réservée pendant {days} jours. À défaut de réception des fonds dans ce délai, le Vendeur peut annuler la commande et remettre le produit en vente ; l'acheteur en est informé par email.",
+                        "La commande est confirmée à réception du paiement intégral."
+                    ]
+                },
+                {
+                    "title": "6. Réserve de propriété",
+                    "paragraphs": [
+                        "Le Vendeur conserve la propriété des produits jusqu'au paiement intégral du prix."
+                    ]
+                },
+                {
+                    "title": "7. Livraison",
+                    "paragraphs": [
+                        "Les délais de livraison indiqués sont estimatifs et courent à compter de la confirmation du paiement. Le Vendeur contacte l'acheteur pour convenir d'un créneau.",
+                        "L'acheteur garantit un accès praticable pour un poids lourd et un emplacement de dépose plan, stable et dégagé. Si la livraison est rendue impossible du fait de conditions d'accès non conformes à celles déclarées, les frais de déplacement supplémentaires peuvent être facturés.",
+                        "Le transfert des risques intervient à la remise du conteneur à l'acheteur ou à la personne qu'il a désignée."
+                    ]
+                },
+                {
+                    "title": "8. Réception et réserves",
+                    "paragraphs": [
+                        "L'acheteur vérifie l'état du conteneur à la livraison. Tout dommage ou manquant doit être mentionné de façon précise sur le bon de livraison et signalé au Vendeur, photos à l'appui, dans les 48 heures."
+                    ]
+                },
+                {
+                    "title": "9. Droit de rétractation (Consommateurs)",
+                    "paragraphs": [
+                        "Conformément à l'article L221-18 du Code de la consommation, le Consommateur dispose d'un délai de 14 jours à compter de la réception du produit pour exercer son droit de rétractation, sans avoir à motiver sa décision.",
+                        "Il notifie sa décision par une déclaration dénuée d'ambiguïté, par exemple depuis la page de sa commande (« Demander un remboursement »), par email à {email} ou au moyen du formulaire ci-dessous.",
+                        "Les frais de retour du conteneur sont à la charge du Consommateur. Le Vendeur rembourse la totalité des sommes versées, frais de livraison initiaux inclus (dans la limite du mode de livraison standard), au plus tard 14 jours après avoir été informé de la décision de rétractation ; il peut différer le remboursement jusqu'à la récupération du produit.",
+                        "Conformément à l'article L221-28 du Code de la consommation, le droit de rétractation ne s'applique pas aux conteneurs confectionnés selon les spécifications du Consommateur ou nettement personnalisés.",
+                        "Formulaire de rétractation : « À l'attention de {company}, {address}, {email} : je vous notifie par la présente ma rétractation du contrat portant sur la vente du bien ci-dessous : n° de commande, commandé le / reçu le, nom du consommateur, adresse du consommateur, date et signature (en cas d'envoi papier). »"
+                    ]
+                },
+                {
+                    "title": "10. Garanties légales (Consommateurs)",
+                    "paragraphs": [
+                        "Le Consommateur bénéficie de la garantie légale de conformité (articles L217-3 et suivants du Code de la consommation) pendant 2 ans à compter de la délivrance du bien, et de la garantie des vices cachés (articles 1641 et suivants du Code civil) pendant 2 ans à compter de leur découverte.",
+                        "Pour les biens d'occasion, la présomption de défaut de conformité est de 12 mois."
+                    ]
+                },
+                {
+                    "title": "11. Clients professionnels",
+                    "paragraphs": [
+                        "Pour les Clients professionnels, les produits sont garantis contre les vices cachés dans les conditions du droit commun. La responsabilité du Vendeur est limitée au montant de la commande concernée, hors faute lourde ou dolosive."
+                    ]
+                },
+                {
+                    "title": "12. Données personnelles",
+                    "paragraphs": [
+                        "Les données collectées lors de la commande sont traitées conformément à notre politique de confidentialité."
+                    ]
+                },
+                {
+                    "title": "13. Médiation (Consommateurs)",
+                    "paragraphs": [
+                        "En cas de litige, le Consommateur adresse d'abord une réclamation écrite au Vendeur. À défaut de solution amiable dans un délai de deux mois, il peut recourir gratuitement au médiateur de la consommation : {mediatorName} ({mediatorUrl}). Il peut également utiliser la plateforme européenne de règlement en ligne des litiges : https://ec.europa.eu/consumers/odr."
+                    ]
+                },
+                {
+                    "title": "14. Droit applicable",
+                    "paragraphs": [
+                        "Les présentes CGV sont soumises au droit français. Pour les Clients professionnels, tout litige relève de la compétence exclusive des tribunaux du ressort du siège social du Vendeur."
+                    ]
+                }
+            ]
+        },
+        "returns": {
+            "title": "Retours, rétractation et remboursements",
+            "sections": [
+                {
+                    "title": "Avant paiement : annulation immédiate",
+                    "paragraphs": [
+                        "Tant qu'aucun paiement n'a été reçu, vous pouvez annuler votre commande gratuitement depuis sa page, en un clic. Le conteneur est aussitôt remis en vente."
+                    ]
+                },
+                {
+                    "title": "Droit de rétractation de 14 jours (particuliers)",
+                    "paragraphs": [
+                        "Particulier, vous disposez de 14 jours à compter de la réception du conteneur pour vous rétracter, sans motif. Faites votre demande depuis la page de votre commande (« Demander un remboursement ») ou par email à {email}.",
+                        "Les frais de retour du conteneur restent à votre charge : nous vous communiquons un devis de reprise. Ce droit ne s'applique pas aux conteneurs modifiés ou fabriqués selon vos spécifications, ni aux achats professionnels."
+                    ]
+                },
+                {
+                    "title": "Conteneur endommagé ou non conforme",
+                    "paragraphs": [
+                        "Notez des réserves précises sur le bon de livraison, prenez des photos et contactez-nous sous 48 heures. Selon la situation, nous proposons une réparation, un échange ou un remboursement, dans le cadre des garanties légales de conformité et des vices cachés."
+                    ]
+                },
+                {
+                    "title": "Remboursement",
+                    "paragraphs": [
+                        "Paiement par carte : remboursement sur la carte utilisée. Paiement par virement : remboursement sur le compte dont vous indiquez l'IBAN dans le formulaire de demande (il y est chiffré).",
+                        "Le remboursement intervient au plus tard 14 jours après validation de votre demande. Vous êtes informé par email à chaque étape."
+                    ]
+                }
+            ]
+        },
+        "shipping": {
+            "title": "Livraison",
+            "sections": [
+                {
+                    "title": "Zones et tarifs",
+                    "paragraphs": [
+                        "Nous livrons en France et dans plusieurs pays européens. Les secteurs disponibles, leurs tarifs (HT) et leurs délais estimés s'affichent au moment de la commande, avant tout paiement. Le retrait au dépôt, sur rendez-vous, est également possible."
+                    ]
+                },
+                {
+                    "title": "Déroulement",
+                    "paragraphs": [
+                        "Après confirmation du paiement, nous vous appelons pour convenir du créneau et vérifier les conditions d'accès. Le conteneur est livré par camion, avec un moyen de déchargement adapté."
+                    ]
+                },
+                {
+                    "title": "À prévoir sur place",
+                    "paragraphs": [
+                        "Un accès praticable pour un poids lourd, un sol plan et stable, et un espace dégagé suffisant pour la manœuvre. Indiquez toute contrainte (portail, pente, lignes électriques) dans la note de commande."
+                    ]
+                },
+                {
+                    "title": "À la livraison",
+                    "paragraphs": [
+                        "Vérifiez l'état du conteneur en présence du chauffeur et notez vos éventuelles réserves sur le bon de livraison, puis signalez-les-nous sous 48 heures avec photos."
+                    ]
+                }
+            ]
+        }
     }
 }

@@ -439,6 +439,7 @@ export default async function HomePage() {
                                     key={product.slug}
                                     product={product}
                                     currency={settings.currency}
+                                    vatRate={settings.vatRate}
                                 />
                             ))}
                         </div>

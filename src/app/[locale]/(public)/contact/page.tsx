@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { IconMail, IconPhone, IconMapPin } from "@tabler/icons-react";
 import { getSiteSettings } from "@/app/(admin)/dashboard/settings/actions";
-import { mapEmbedUrl } from "@/lib/maps";
+import { MapEmbed } from "@/components/public/map-embed";
 import { ContactForm } from "@/components/public/contact-form";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -95,12 +95,7 @@ export default async function ContactPage() {
 
                     {settings.address && (
                         <div className="overflow-hidden rounded-[24px] border border-border">
-                            <iframe
-                                src={mapEmbedUrl(settings.address)}
-                                title={t("address")}
-                                className="h-56 w-full"
-                                loading="lazy"
-                            />
+                            <MapEmbed address={settings.address} title={t("address")} className="h-56" />
                         </div>
                     )}
                 </div>

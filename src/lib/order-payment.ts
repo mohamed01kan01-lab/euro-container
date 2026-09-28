@@ -78,7 +78,7 @@ export async function markOrderPaid(
 export async function cancelOrder(
     orderId: string,
     allowed: PaymentStatus[],
-    opts: { notifyCustomer: boolean },
+    opts: { notifyCustomer: boolean; reason?: "unpaid" },
 ): Promise<boolean> {
     const cancelled = await prisma.$transaction(async (tx) => {
         const res = await tx.order.updateMany({
@@ -118,7 +118,7 @@ export async function cancelOrder(
         });
     }
     if (opts.notifyCustomer) {
-        defer("email annulation", () => sendOrderCancelledEmail(orderId));
+        defer("email annulation", () => sendOrderCancelledEmail(orderId, opts.reason));
     }
     return true;
 }
@@ -177,6 +177,8 @@ export async function startCardPayment(
             total: Number(order.total),
             discount: Number(order.discount),
             shippingCost: Number(order.shippingCost),
+            taxRate: Number(order.taxRate),
+            taxAmount: Number(order.taxAmount),
             items: order.items.map((i) => ({
                 name: i.name,
                 price: Number(i.price),

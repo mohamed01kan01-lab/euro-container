@@ -1,9 +1,9 @@
 import { LegalDocument, legalMetadata } from "@/components/public/legal-document";
 
 export function generateMetadata() {
-    return legalMetadata("returns");
+    return legalMetadata("notice");
 }
 
-export default function ReturnsPage() {
-    return <LegalDocument doc="returns" />;
+export default function LegalNoticePage() {
+    return <LegalDocument doc="notice" />;
 }

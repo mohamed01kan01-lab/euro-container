@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "@/i18n/routing";
+import { Link, useRouter } from "@/i18n/routing";
 import {
     IconBuildingBank,
     IconBuildingStore,
@@ -23,7 +23,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { formatPrice } from "@/lib/currency";
-import { mapEmbedUrl } from "@/lib/maps";
+import { taxOf } from "@/lib/tax";
+import { MapEmbed } from "@/components/public/map-embed";
 import type { CheckoutPaymentMethod } from "@/lib/payment";
 import { placeOrder } from "@/app/[locale]/(public)/checkout/actions";
 
@@ -64,9 +65,23 @@ interface CheckoutFormProps {
     pickupPoints: CheckoutPickup[];
     methods: CheckoutPaymentMethod[];
     currency: string;
+    /** Taux de TVA (%) : les montants reçus sont HT, le client paie le TTC. */
+    vatRate: number;
     paymentDueDays: number;
     supportPhone: string | null;
-    defaults: { name: string; email: string };
+    /** Pré-remplissage : session et dernière commande du client connecté. */
+    defaults: {
+        name: string;
+        email: string;
+        phone: string;
+        company: string;
+        vatNumber: string;
+        addressLine1: string;
+        addressLine2: string;
+        city: string;
+        postalCode: string;
+        country: string;
+    };
 }
 
 const FORM_ID = "checkout-form";
@@ -128,6 +143,7 @@ export function CheckoutForm({
     pickupPoints,
     methods,
     currency,
+    vatRate,
     paymentDueDays,
     supportPhone,
     defaults,
@@ -146,7 +162,7 @@ export function CheckoutForm({
     const [pickupId, setPickupId] = useState(pickupPoints[0]?.id ?? "");
     const [paymentMethod, setPaymentMethod] = useState<CheckoutPaymentMethod>(methods[0]);
     const [showNotes, setShowNotes] = useState(false);
-    const [showCompany, setShowCompany] = useState(false);
+    const [showCompany, setShowCompany] = useState(!!defaults.company);
 
     const selectedZone = zones.find((z) => z.id === zoneId) ?? null;
     const selectedPickup = pickupPoints.find((p) => p.id === pickupId) ?? null;
@@ -159,13 +175,17 @@ export function CheckoutForm({
             : selectedZone.freeAbove !== null && afterDiscount >= selectedZone.freeAbove
               ? 0
               : selectedZone.price;
-    const total = afterDiscount + shippingCost;
+    const totalHt = afterDiscount + shippingCost;
+    const tax = taxOf(totalHt, vatRate);
+    const total = Math.round((totalHt + tax) * 100) / 100;
     const busy = pending || redirecting;
 
+    // Libellés conformes à l'article L221-14 du Code de la consommation : le
+    // bouton doit indiquer sans ambiguïté que la commande oblige à payer.
     const ctaLabel =
         paymentMethod === "STRIPE"
             ? `Payer ${formatPrice(total, currency)}`
-            : "Réserver ma commande";
+            : "Commander et payer par virement";
 
     function onSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -181,6 +201,7 @@ export function CheckoutForm({
                 customerEmail: field("customerEmail"),
                 customerPhone: field("customerPhone"),
                 company: field("company"),
+                vatNumber: field("vatNumber"),
                 shippingMethod,
                 shippingZoneId: shippingMethod === "DELIVERY" ? zoneId : undefined,
                 pickupPointId: shippingMethod === "PICKUP" ? pickupId : undefined,
@@ -236,7 +257,7 @@ export function CheckoutForm({
                         </div>
                         <div className="space-y-1.5">
                             <Label htmlFor="customerPhone">Téléphone</Label>
-                            <Input id="customerPhone" name="customerPhone" type="tel" autoComplete="tel" required minLength={6} placeholder="+33 6 12 34 56 78" />
+                            <Input id="customerPhone" name="customerPhone" type="tel" autoComplete="tel" required minLength={6} placeholder="+33 6 12 34 56 78" defaultValue={defaults.phone} />
                         </div>
                         <div className="space-y-1.5 sm:col-span-2">
                             <Label htmlFor="customerEmail">Email</Label>
@@ -246,10 +267,18 @@ export function CheckoutForm({
                             </p>
                         </div>
                         {showCompany ? (
-                            <div className="space-y-1.5 sm:col-span-2">
-                                <Label htmlFor="company">Société</Label>
-                                <Input id="company" name="company" autoComplete="organization" autoFocus />
-                            </div>
+                            <>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="company">Société</Label>
+                                    <Input id="company" name="company" autoComplete="organization" autoFocus={!defaults.company} defaultValue={defaults.company} />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="vatNumber">
+                                        N° TVA intracommunautaire <span className="font-normal text-muted-foreground">(facultatif)</span>
+                                    </Label>
+                                    <Input id="vatNumber" name="vatNumber" autoComplete="off" placeholder="FR12345678901" className="uppercase" defaultValue={defaults.vatNumber} />
+                                </div>
+                            </>
                         ) : (
                             <button
                                 type="button"
@@ -308,7 +337,7 @@ export function CheckoutForm({
                                                 )}
                                             </span>
                                             <span className={cn("text-sm font-semibold", free && "text-green-600")}>
-                                                {free ? "Offerte" : formatPrice(zone.price, currency)}
+                                                {free ? "Offerte" : `${formatPrice(zone.price, currency)} HT`}
                                             </span>
                                         </label>
                                     );
@@ -318,25 +347,25 @@ export function CheckoutForm({
                             <div className="grid gap-4 sm:grid-cols-6">
                                 <div className="space-y-1.5 sm:col-span-6">
                                     <Label htmlFor="addressLine1">Adresse de livraison</Label>
-                                    <Input id="addressLine1" name="addressLine1" autoComplete="address-line1" required />
+                                    <Input id="addressLine1" name="addressLine1" autoComplete="address-line1" required defaultValue={defaults.addressLine1} />
                                 </div>
                                 <div className="space-y-1.5 sm:col-span-6">
                                     <Label htmlFor="addressLine2">
                                         Complément <span className="font-normal text-muted-foreground">(accès, portail, zone…)</span>
                                     </Label>
-                                    <Input id="addressLine2" name="addressLine2" autoComplete="address-line2" />
+                                    <Input id="addressLine2" name="addressLine2" autoComplete="address-line2" defaultValue={defaults.addressLine2} />
                                 </div>
                                 <div className="space-y-1.5 sm:col-span-2">
                                     <Label htmlFor="postalCode">Code postal</Label>
-                                    <Input id="postalCode" name="postalCode" autoComplete="postal-code" />
+                                    <Input id="postalCode" name="postalCode" autoComplete="postal-code" defaultValue={defaults.postalCode} />
                                 </div>
                                 <div className="space-y-1.5 sm:col-span-4">
                                     <Label htmlFor="city">Ville</Label>
-                                    <Input id="city" name="city" autoComplete="address-level2" required />
+                                    <Input id="city" name="city" autoComplete="address-level2" required defaultValue={defaults.city} />
                                 </div>
                                 <div className="space-y-1.5 sm:col-span-6">
                                     <Label htmlFor="country">Pays</Label>
-                                    <Input id="country" name="country" autoComplete="country-name" defaultValue="France" />
+                                    <Input id="country" name="country" autoComplete="country-name" defaultValue={defaults.country || "France"} />
                                 </div>
                             </div>
                         </div>
@@ -359,13 +388,11 @@ export function CheckoutForm({
                             {/* Carte construite à partir de l'adresse, sans URL stockée. */}
                             {selectedPickup && (
                                 <div className="overflow-hidden rounded-[20px] border border-border">
-                                    <iframe
+                                    <MapEmbed
                                         key={selectedPickup.id}
-                                        src={mapEmbedUrl(selectedPickup.address)}
+                                        address={selectedPickup.address}
                                         title={`Emplacement de ${selectedPickup.name}`}
-                                        loading="lazy"
-                                        className="h-52 w-full"
-                                        referrerPolicy="no-referrer-when-downgrade"
+                                        className="h-52"
                                     />
                                 </div>
                             )}
@@ -419,6 +446,20 @@ export function CheckoutForm({
                         )}
                     </div>
                 </Step>
+
+                {/* Information précontractuelle : visible aussi sur mobile, où
+                    le bouton est dans la barre fixe. */}
+                <p className="px-1 text-xs leading-relaxed text-muted-foreground">
+                    En validant votre commande, vous acceptez nos{" "}
+                    <Link href="/terms" target="_blank" className="font-medium text-foreground underline underline-offset-2">
+                        conditions générales de vente
+                    </Link>{" "}
+                    et notre{" "}
+                    <Link href="/privacy" target="_blank" className="font-medium text-foreground underline underline-offset-2">
+                        politique de confidentialité
+                    </Link>
+                    . Particulier, vous disposez d&apos;un délai de 14 jours pour vous rétracter à compter de la réception de votre commande.
+                </p>
             </form>
 
             {/* ─── Récapitulatif ─────────────────────────────────────────── */}
@@ -451,7 +492,10 @@ export function CheckoutForm({
                                     <span className="block text-xs text-muted-foreground">{line.variantLabel}</span>
                                 )}
                             </span>
-                            <span className="whitespace-nowrap font-medium">{formatPrice(line.lineTotal, currency)}</span>
+                            <span className="whitespace-nowrap font-medium">
+                                {formatPrice(line.lineTotal, currency)}
+                                <span className="ml-1 text-xs font-normal text-muted-foreground">HT</span>
+                            </span>
                         </li>
                     ))}
                 </ul>
@@ -460,7 +504,7 @@ export function CheckoutForm({
 
                 <dl className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                        <dt className="text-muted-foreground">Sous-total</dt>
+                        <dt className="text-muted-foreground">Sous-total HT</dt>
                         <dd>{formatPrice(subtotal, currency)}</dd>
                     </div>
                     {discount > 0 && (
@@ -474,12 +518,20 @@ export function CheckoutForm({
                             {shippingMethod === "PICKUP" ? "Retrait sur dépôt" : "Livraison"}
                         </dt>
                         <dd className={cn(shippingCost === 0 && "font-medium text-green-600")}>
-                            {shippingCost === 0 ? "Offerte" : formatPrice(shippingCost, currency)}
+                            {shippingCost === 0 ? "Offerte" : `${formatPrice(shippingCost, currency)} HT`}
                         </dd>
+                    </div>
+                    <div className="flex justify-between">
+                        <dt className="text-muted-foreground">Total HT</dt>
+                        <dd>{formatPrice(totalHt, currency)}</dd>
+                    </div>
+                    <div className="flex justify-between">
+                        <dt className="text-muted-foreground">TVA ({vatRate} %)</dt>
+                        <dd>{formatPrice(tax, currency)}</dd>
                     </div>
                     <Separator className="my-3" />
                     <div className="flex items-baseline justify-between">
-                        <dt className="font-semibold">Total</dt>
+                        <dt className="font-semibold">Total TTC</dt>
                         <dd className="font-display text-3xl text-orange-600">{formatPrice(total, currency)}</dd>
                     </div>
                 </dl>
@@ -488,7 +540,7 @@ export function CheckoutForm({
                     {submitButton("w-full")}
                     {paymentMethod === "BANK_TRANSFER" && (
                         <p className="mt-2 text-center text-xs text-muted-foreground">
-                            Aucun paiement maintenant : vous recevez le RIB tout de suite.
+                            Vous recevez le RIB et un QR code immédiatement, votre commande est réservée {paymentDueDays} jours.
                         </p>
                     )}
                 </div>
@@ -519,10 +571,10 @@ export function CheckoutForm({
             <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-4 py-3 backdrop-blur lg:hidden">
                 <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
                     <div className="min-w-0">
-                        <p className="text-xs text-muted-foreground">Total</p>
+                        <p className="text-xs text-muted-foreground">Total TTC</p>
                         <p className="font-display text-xl leading-tight text-orange-600">{formatPrice(total, currency)}</p>
                     </div>
-                    {submitButton("min-w-0 flex-1 max-w-xs")}
+                    {submitButton("min-w-0 flex-1 max-w-xs whitespace-normal text-center leading-tight")}
                 </div>
             </div>
         </div>

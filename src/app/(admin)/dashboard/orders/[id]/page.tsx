@@ -79,6 +79,14 @@ export default async function OrderDetailPage({ params }: PageProps) {
                     <article className="rounded-3xl border border-border bg-card p-4 space-y-3">
                         <h2 className="text-sm font-semibold">Client</h2>
                         <p className="font-medium">{order.customerName}</p>
+                        {typeof address.company === "string" && (
+                            <p className="text-sm">
+                                {address.company}
+                                {typeof address.vatNumber === "string" && (
+                                    <span className="ml-2 font-mono text-xs text-muted-foreground">TVA {address.vatNumber}</span>
+                                )}
+                            </p>
+                        )}
                         <dl className="space-y-1.5 text-sm text-muted-foreground">
                             <div className="flex items-center gap-2">
                                 <IconMail size={14} className="shrink-0" />
@@ -153,7 +161,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
                         <div className="p-4 space-y-1.5 text-sm">
                             <Separator className="mb-3" />
                             <div className="flex justify-between text-muted-foreground">
-                                <span>Sous-total</span>
+                                <span>Sous-total{order.taxAmount > 0 ? " HT" : ""}</span>
                                 <span>
                                     {formatPrice(order.subtotal, currency)}
                                 </span>
@@ -177,9 +185,15 @@ export default async function OrderDetailPage({ params }: PageProps) {
                                     </span>
                                 </div>
                             )}
+                            {order.taxAmount > 0 && (
+                                <div className="flex justify-between text-muted-foreground">
+                                    <span>TVA ({order.taxRate} %)</span>
+                                    <span>{formatPrice(order.taxAmount, currency)}</span>
+                                </div>
+                            )}
                             <Separator className="my-2" />
                             <div className="flex justify-between font-semibold text-base">
-                                <span>Total</span>
+                                <span>Total{order.taxAmount > 0 ? " TTC" : ""}</span>
                                 <span>{formatPrice(order.total, currency)}</span>
                             </div>
                             {order.paymentMethod && (

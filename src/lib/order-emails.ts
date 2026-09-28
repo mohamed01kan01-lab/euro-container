@@ -1,6 +1,14 @@
 import type { SiteSettings } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { send } from "@/lib/email";
+import {
+    EMAIL_COLORS as C,
+    brandFromSettings,
+    esc,
+    kvTable,
+    renderEmail,
+    send,
+    type RenderEmailOptions,
+} from "@/lib/email";
 import { getSiteSettings } from "@/app/(admin)/dashboard/settings/actions";
 import { formatPrice } from "@/lib/currency";
 import { formatIban } from "@/lib/bank";
@@ -27,86 +35,20 @@ function adminRecipient(s: SiteSettings): string | null {
     return s.contactEmail || process.env.ADMIN_EMAIL || null;
 }
 
-// ─── Mise en page ────────────────────────────────────────────────────────────
+// ─── Mise en page (partagée avec les emails de compte, cf. lib/email) ────────
 
-const esc = (v: string) =>
-    v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-const C = {
-    ink: "#0F172A",
-    muted: "#64748B",
-    line: "#E2E8F0",
-    soft: "#F8FAFC",
-    accent: "#EA580C",
-};
-
-interface ShellOptions {
+interface ShellOptions extends Omit<RenderEmailOptions, "brand"> {
     settings: SiteSettings;
-    preheader: string;
-    title: string;
-    intro: string;
-    body?: string;
-    ctas?: { label: string; url: string; secondary?: boolean }[];
 }
 
-function shell({ settings, preheader, title, intro, body = "", ctas = [] }: ShellOptions) {
-    const buttons = ctas
-        .map((c) =>
-            c.secondary
-                ? `<a href="${c.url}" style="display:inline-block;margin:0 8px 8px 0;border:2px solid ${C.line};color:${C.ink};text-decoration:none;padding:11px 22px;border-radius:999px;font-size:14px;font-weight:700;">${esc(c.label)}</a>`
-                : `<a href="${c.url}" style="display:inline-block;margin:0 8px 8px 0;background:${C.accent};color:#fff;text-decoration:none;padding:13px 26px;border-radius:999px;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">${esc(c.label)}</a>`,
-        )
-        .join("");
-
-    const contact = [settings.contactEmail, settings.phone].filter(Boolean).join(" · ");
-
-    return `<!DOCTYPE html>
-<html lang="fr">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:${C.soft};font-family:Arial,Helvetica,sans-serif;">
-  <span style="display:none;max-height:0;overflow:hidden;opacity:0;">${esc(preheader)}</span>
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:${C.soft};padding:32px 12px;">
-    <tr><td align="center">
-      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;background:#fff;border-radius:24px;padding:36px 28px;">
-        <tr><td style="padding-bottom:20px;border-bottom:1px solid ${C.line};">
-          <p style="margin:0;font-size:20px;font-weight:700;color:${C.ink};">${esc(settings.siteName)}</p>
-        </td></tr>
-        <tr><td style="padding-top:26px;">
-          <p style="margin:0 0 10px;font-size:22px;line-height:1.3;font-weight:700;color:${C.ink};">${title}</p>
-          <p style="margin:0 0 22px;font-size:15px;line-height:1.6;color:${C.muted};">${intro}</p>
-          ${body}
-          ${buttons ? `<div style="margin-top:24px;">${buttons}</div>` : ""}
-        </td></tr>
-        <tr><td style="padding-top:28px;">
-          <p style="margin:0;padding-top:18px;border-top:1px solid ${C.line};font-size:12px;line-height:1.6;color:#94A3B8;">
-            Une question ? Répondez simplement à cet email${contact ? ` ou contactez-nous : ${esc(contact)}` : ""}.
-          </p>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
-}
-
-function kvTable(rows: [string, string][], highlightLast = false) {
-    return `<table width="100%" cellpadding="0" cellspacing="0" style="background:${C.soft};border:1px solid ${C.line};border-radius:16px;padding:6px 16px;margin-bottom:18px;">
-${rows
-    .map(
-        ([k, v], i) => `<tr>
-  <td style="padding:9px 0;font-size:13px;color:${C.muted};vertical-align:top;${i < rows.length - 1 ? `border-bottom:1px solid ${C.line};` : ""}">${esc(k)}</td>
-  <td style="padding:9px 0 9px 12px;font-size:14px;color:${highlightLast && i === rows.length - 1 ? C.accent : C.ink};font-weight:700;text-align:right;${i < rows.length - 1 ? `border-bottom:1px solid ${C.line};` : ""}">${v}</td>
-</tr>`,
-    )
-    .join("")}
-</table>`;
-}
+const shell = ({ settings, ...rest }: ShellOptions) =>
+    renderEmail({ brand: brandFromSettings(settings), ...rest });
 
 function summary({ order }: Loaded) {
     const cur = order.currency;
     const rows: [string, string][] = order.items.map((i) => [
         `${i.quantity} × ${i.name}`,
-        formatPrice(Number(i.price) * i.quantity, cur),
+        `${formatPrice(Number(i.price) * i.quantity, cur)}${Number(order.taxAmount) > 0 ? " HT" : ""}`,
     ]);
     if (Number(order.discount) > 0) {
         rows.push(["Remise", `−${formatPrice(Number(order.discount), cur)}`]);
@@ -115,9 +57,15 @@ function summary({ order }: Loaded) {
         "Livraison",
         Number(order.shippingCost) === 0
             ? "Offerte"
-            : formatPrice(Number(order.shippingCost), cur),
+            : `${formatPrice(Number(order.shippingCost), cur)}${Number(order.taxAmount) > 0 ? " HT" : ""}`,
     ]);
-    rows.push(["Total", formatPrice(Number(order.total), cur)]);
+    // Commandes antérieures à la TVA : taxAmount vaut 0, on n'affiche pas la ligne.
+    if (Number(order.taxAmount) > 0) {
+        rows.push([`TVA (${Number(order.taxRate)} %)`, formatPrice(Number(order.taxAmount), cur)]);
+        rows.push(["Total TTC", formatPrice(Number(order.total), cur)]);
+    } else {
+        rows.push(["Total", formatPrice(Number(order.total), cur)]);
+    }
     return kvTable(rows, true);
 }
 
@@ -172,6 +120,69 @@ export async function sendOrderReceivedEmail(orderId: string) {
     });
 }
 
+/**
+ * Commande carte créée. Formulé pour rester juste que le paiement ait abouti
+ * ou non : si le client a fermé l'onglet Stripe, c'est son lien de reprise.
+ */
+export async function sendOrderReservedEmail(orderId: string) {
+    const data = await load(orderId);
+    const { order, settings } = data;
+    const due = order.paymentDueAt ? dateFr(order.paymentDueAt) : null;
+    await send({
+        to: order.customerEmail,
+        subject: `Commande ${order.orderNumber} enregistrée`,
+        replyTo: settings.contactEmail ?? undefined,
+        html: shell({
+            settings,
+            preheader: "Votre commande est enregistrée. Retrouvez-la à tout moment.",
+            title: `Merci ${esc(order.customerName.split(" ")[0])}, votre commande est enregistrée`,
+            intro: `Si votre paiement est déjà passé, vous recevez sa confirmation dans quelques instants. Sinon, votre commande vous attend${due ? ` jusqu'au <strong style="color:${C.ink};">${due}</strong>` : ""} : reprenez le paiement en un clic, par carte ou par virement.`,
+            body: summary(data),
+            ctas: [{ label: "Voir ma commande", url: orderUrl(order.orderNumber) }],
+        }),
+    });
+}
+
+/**
+ * Relance d'une commande impayée. Virement : le RIB complet est redonné, pour
+ * que le client puisse payer sans revenir sur le site. Carte : lien de reprise.
+ */
+export async function sendPaymentReminderEmail(orderId: string, final: boolean) {
+    const data = await load(orderId);
+    const { order, settings } = data;
+    const url = orderUrl(order.orderNumber);
+    const amount = formatPrice(Number(order.total), order.currency);
+    const due = order.paymentDueAt ? dateFr(order.paymentDueAt) : null;
+    const isTransfer = order.paymentMethod === "BANK_TRANSFER";
+
+    const subject = final
+        ? `Dernier rappel : votre commande ${order.orderNumber} ${due ? `est réservée jusqu'au ${due}` : "vous attend"}`
+        : `Votre commande ${order.orderNumber} vous attend`;
+
+    const intro = isTransfer
+        ? `Nous n'avons pas encore reçu votre virement de <strong style="color:${C.ink};">${amount}</strong>.${due ? ` Votre commande reste réservée jusqu'au <strong style="color:${C.ink};">${due}</strong>.` : ""} Si vous l'avez déjà effectué, signalez-le en un clic pour accélérer sa validation.`
+        : `Votre paiement de <strong style="color:${C.ink};">${amount}</strong> n'a pas été finalisé.${due ? ` Votre commande reste réservée jusqu'au <strong style="color:${C.ink};">${due}</strong>.` : ""} Reprenez-le en un clic, par carte ou par virement.`;
+
+    await send({
+        to: order.customerEmail,
+        subject,
+        replyTo: settings.contactEmail ?? undefined,
+        html: shell({
+            settings,
+            preheader: final ? "Après cette date, votre commande pourra être libérée." : "Il ne manque plus que le paiement.",
+            title: final ? "Dernier rappel avant libération de votre commande" : "Il ne manque plus que votre paiement",
+            intro,
+            body: (isTransfer ? bankBlock(data) : "") + summary(data),
+            ctas: isTransfer
+                ? [
+                      { label: "J'ai effectué le virement", url: `${url}#paiement` },
+                      { label: "Voir ma commande", url, secondary: true },
+                  ]
+                : [{ label: "Finaliser mon paiement", url }],
+        }),
+    });
+}
+
 export async function sendTransferDeclaredEmail(orderId: string) {
     const data = await load(orderId);
     const { order, settings } = data;
@@ -208,7 +219,7 @@ export async function sendOrderPaidEmail(orderId: string) {
     });
 }
 
-export async function sendOrderCancelledEmail(orderId: string) {
+export async function sendOrderCancelledEmail(orderId: string, reason?: "unpaid") {
     const data = await load(orderId);
     const { order, settings } = data;
     await send({
@@ -219,7 +230,10 @@ export async function sendOrderCancelledEmail(orderId: string) {
             settings,
             preheader: "Votre commande a été annulée.",
             title: "Votre commande a été annulée",
-            intro: `La commande <strong style="color:${C.ink};">${esc(order.orderNumber)}</strong> est annulée. Si c'est une erreur ou si vous souhaitez un autre modèle, notre équipe vous aide volontiers à trouver le conteneur adapté.`,
+            intro:
+                reason === "unpaid"
+                    ? `Faute de paiement reçu à temps, la commande <strong style="color:${C.ink};">${esc(order.orderNumber)}</strong> est annulée et le stock a été remis en vente. Aucun montant ne vous sera demandé. Toujours intéressé ? Le modèle est peut-être encore disponible : commandez-le à nouveau ou contactez-nous.`
+                    : `La commande <strong style="color:${C.ink};">${esc(order.orderNumber)}</strong> est annulée. Si c'est une erreur ou si vous souhaitez un autre modèle, notre équipe vous aide volontiers à trouver le conteneur adapté.`,
             body: summary(data),
             ctas: [{ label: "Voir nos conteneurs", url: `${APP_URL}/shop` }],
         }),

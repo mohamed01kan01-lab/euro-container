@@ -406,6 +406,9 @@ const paymentsSchema = z
         bankAddress: z.string().trim(),
         paymentDueDays: z.number({ error: "Nombre requis" }).int().min(1, "Minimum 1 jour").max(60, "Maximum 60 jours"),
         bankTransferDetails: z.string().optional(),
+        paymentRemindersEnabled: z.boolean(),
+        autoCancelUnpaid: z.boolean(),
+        autoCancelGraceDays: z.number({ error: "Nombre requis" }).int().min(0, "Minimum 0 jour").max(30, "Maximum 30 jours"),
     })
     .superRefine((v, ctx) => {
         if (!v.bankTransferEnabled) return;
@@ -431,10 +434,15 @@ function TabPayments({ s }: { s: SiteSettings }) {
             bankAddress: s.bankAddress ?? "",
             paymentDueDays: s.paymentDueDays,
             bankTransferDetails: s.bankTransferDetails ?? "",
+            paymentRemindersEnabled: s.paymentRemindersEnabled,
+            autoCancelUnpaid: s.autoCancelUnpaid,
+            autoCancelGraceDays: s.autoCancelGraceDays,
         },
     });
 
     const bankTransferEnabled = watch("bankTransferEnabled");
+    const paymentRemindersEnabled = watch("paymentRemindersEnabled");
+    const autoCancelUnpaid = watch("autoCancelUnpaid");
     const secretKey = watch("stripeSecretKey");
     const stripeMode = secretKey?.startsWith("sk_live_") ? "live" : secretKey?.startsWith("sk_test_") ? "test" : null;
     const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/stripe/webhook`;
@@ -454,6 +462,9 @@ function TabPayments({ s }: { s: SiteSettings }) {
                 bankAddress: data.bankAddress || null,
                 paymentDueDays: data.paymentDueDays,
                 bankTransferDetails: data.bankTransferDetails || null,
+                paymentRemindersEnabled: data.paymentRemindersEnabled,
+                autoCancelUnpaid: data.autoCancelUnpaid,
+                autoCancelGraceDays: data.autoCancelGraceDays,
             });
             toast.success("Paiements mis à jour");
         } catch {
@@ -551,6 +562,159 @@ function TabPayments({ s }: { s: SiteSettings }) {
                 </div>
             </section>
 
+            <Separator />
+
+            <section className="space-y-4">
+                <div>
+                    <h2 className="text-sm font-semibold">Relances et commandes impayées</h2>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        Vérifié chaque matin. Le bouton « Relancer le client » de la fiche commande reste disponible à tout moment.
+                    </p>
+                </div>
+
+                <div className="flex items-start justify-between gap-4 rounded-2xl border border-border p-4">
+                    <div className="space-y-0.5">
+                        <Label htmlFor="paymentRemindersEnabled">Relances automatiques</Label>
+                        <p className="text-xs text-muted-foreground">
+                            Carte : relance après 1 h puis 48 h plus tard. Virement : relance à J+2 puis dernier rappel la veille de la date limite.
+                        </p>
+                    </div>
+                    <Switch
+                        id="paymentRemindersEnabled"
+                        checked={paymentRemindersEnabled}
+                        onCheckedChange={(v) => setValue("paymentRemindersEnabled", v)}
+                    />
+                </div>
+
+                <div className="space-y-4 rounded-2xl border border-border p-4">
+                    <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-0.5">
+                            <Label htmlFor="autoCancelUnpaid">Annulation automatique des impayés</Label>
+                            <p className="text-xs text-muted-foreground">
+                                Libère le stock des commandes non payées après la date limite. Le client est prévenu. Les virements déjà signalés ne sont jamais annulés.
+                            </p>
+                        </div>
+                        <Switch
+                            id="autoCancelUnpaid"
+                            checked={autoCancelUnpaid}
+                            onCheckedChange={(v) => setValue("autoCancelUnpaid", v)}
+                        />
+                    </div>
+                    {autoCancelUnpaid && (
+                        <FieldRow
+                            id="autoCancelGraceDays"
+                            label="Délai de grâce après la date limite (jours)"
+                            error={errors.autoCancelGraceDays?.message}
+                        >
+                            <NoFillInput id="autoCancelGraceDays" type="number" min={0} max={30} className="w-28" {...register("autoCancelGraceDays", { valueAsNumber: true })} />
+                        </FieldRow>
+                    )}
+                </div>
+            </section>
+
+            <SaveButton loading={isSubmitting} />
+        </form>
+    );
+}
+
+// ─── Tab: Informations légales ────────────────────────────────────────────────
+
+const LEGAL_FIELDS = [
+    ["legalName", "Raison sociale", "Euro Container Market"],
+    ["legalForm", "Forme juridique", "SAS"],
+    ["legalCapital", "Capital social", "10 000 €"],
+    ["legalSiret", "SIRET", "123 456 789 00012"],
+    ["legalRcs", "Immatriculation (RCS)", "RCS Le Havre"],
+    ["legalVatNumber", "N° TVA intracommunautaire", "FR12123456789"],
+    ["publicationDirector", "Directeur de la publication", "Prénom Nom"],
+    ["mediatorName", "Médiateur de la consommation", "Nom du médiateur"],
+    ["mediatorUrl", "Site du médiateur", "https://…"],
+] as const;
+
+type LegalKey = (typeof LEGAL_FIELDS)[number][0] | "legalAddress" | "hostInfo";
+
+const legalSchema = z.object({
+    vatRate: z.number({ error: "Nombre requis" }).int().min(0, "Minimum 0 %").max(30, "Maximum 30 %"),
+    legalName: z.string().trim(),
+    legalForm: z.string().trim(),
+    legalCapital: z.string().trim(),
+    legalSiret: z.string().trim(),
+    legalRcs: z.string().trim(),
+    legalVatNumber: z.string().trim(),
+    publicationDirector: z.string().trim(),
+    mediatorName: z.string().trim(),
+    mediatorUrl: z.string().trim(),
+    legalAddress: z.string().trim(),
+    hostInfo: z.string().trim(),
+});
+type LegalValues = z.infer<typeof legalSchema>;
+
+const DEFAULT_HOST = "Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis — vercel.com";
+
+function TabLegal({ s }: { s: SiteSettings }) {
+    const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LegalValues>({
+        resolver: zodResolver(legalSchema),
+        defaultValues: {
+            vatRate: s.vatRate,
+            ...(Object.fromEntries(
+                [...LEGAL_FIELDS.map(([k]) => k), "legalAddress", "hostInfo"].map((k) => [k, s[k as LegalKey] ?? ""]),
+            ) as Omit<LegalValues, "vatRate">),
+            hostInfo: s.hostInfo ?? DEFAULT_HOST,
+        },
+    });
+
+    const onSubmit = async (data: LegalValues) => {
+        try {
+            const { vatRate, ...texts } = data;
+            await save({
+                vatRate,
+                ...Object.fromEntries(Object.entries(texts).map(([k, v]) => [k, v || null])),
+            });
+            toast.success("Informations légales mises à jour");
+        } catch {
+            toast.error("Erreur lors de la mise à jour");
+        }
+    };
+
+    return (
+        <form autoComplete="off" onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-xl">
+            <section className="space-y-4">
+                <div>
+                    <h2 className="text-sm font-semibold">TVA</h2>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        Les prix des produits, frais de port et remises sont saisis HT. La TVA est ajoutée à la commande : le client paie le TTC.
+                    </p>
+                </div>
+                <FieldRow id="vatRate" label="Taux de TVA (%)" error={errors.vatRate?.message}>
+                    <NoFillInput id="vatRate" type="number" min={0} max={30} className="w-28" {...register("vatRate", { valueAsNumber: true })} />
+                </FieldRow>
+            </section>
+
+            <Separator />
+
+            <section className="space-y-4">
+                <div>
+                    <h2 className="text-sm font-semibold">Identité de l&apos;entreprise</h2>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        Alimente les mentions légales, les CGV, la politique de confidentialité, le pied de page et les emails. Un champ vide
+                        apparaît « [à compléter] » sur les pages légales.
+                    </p>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                    {LEGAL_FIELDS.map(([key, label, placeholder]) => (
+                        <FieldRow key={key} id={key} label={label}>
+                            <NoFillInput id={key} placeholder={placeholder} {...register(key)} />
+                        </FieldRow>
+                    ))}
+                </div>
+                <FieldRow id="legalAddress" label="Adresse du siège social" hint="Si vide, l'adresse de l'onglet Général est utilisée">
+                    <NoFillTextarea id="legalAddress" rows={2} className="resize-none" {...register("legalAddress")} />
+                </FieldRow>
+                <FieldRow id="hostInfo" label="Hébergeur" hint="Nom, adresse et site de l'hébergeur du site">
+                    <NoFillTextarea id="hostInfo" rows={2} className="resize-none" {...register("hostInfo")} />
+                </FieldRow>
+            </section>
+
             <SaveButton loading={isSubmitting} />
         </form>
     );
@@ -566,6 +730,7 @@ function TabPayments({ s }: { s: SiteSettings }) {
 const TABS = [
     { value: "general", label: "Général", Tab: TabGeneral },
     { value: "payments", label: "Paiements", Tab: TabPayments },
+    { value: "legal", label: "Informations légales", Tab: TabLegal },
     { value: "seo", label: "SEO", Tab: TabSeo },
     { value: "social", label: "Réseaux sociaux", Tab: TabSocial },
     { value: "integrations", label: "Intégrations", Tab: TabIntegrations },

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import {
     IconCircleCheck,
     IconCopy,
+    IconDownload,
     IconEye,
     IconFileText,
     IconLoader2,
@@ -32,9 +33,9 @@ import { formatPrice } from "@/lib/currency";
 import {
     adminCancelOrder,
     confirmPayment,
-    getProofUrl,
+    getProofUrls,
     refundOrder,
-    resendPaymentEmail,
+    remindCustomer,
     resolveRefund,
     revealRefundIban,
     type AdminResult,
@@ -58,6 +59,7 @@ export function PaymentPanel({ order }: { order: OrderDetail }) {
     const [restock, setRestock] = useState(false);
     const [viaStripe, setViaStripe] = useState(true);
     const [ibans, setIbans] = useState<Record<string, string>>({});
+    const [preview, setPreview] = useState<{ name: string; url: string; downloadUrl: string; isPdf: boolean } | null>(null);
 
     const status = order.paymentStatus;
     const isCard = order.paymentMethod === "STRIPE";
@@ -90,16 +92,11 @@ export function PaymentPanel({ order }: { order: OrderDetail }) {
         });
     }
 
-    function openProof(id: string) {
-        // Fenêtre ouverte avant l'appel serveur : sinon le bloqueur de pop-up l'empêche.
-        const win = window.open("", "_blank");
+    function openProof(id: string, name: string) {
         startTransition(async () => {
-            const res = await getProofUrl(id);
-            if (res.ok && win) win.location.href = res.url;
-            else {
-                win?.close();
-                toast.error(res.ok ? "Autorisez les fenêtres pop-up." : res.error);
-            }
+            const res = await getProofUrls(id);
+            if (res.ok) setPreview({ name, url: res.previewUrl, downloadUrl: res.downloadUrl, isPdf: res.isPdf });
+            else toast.error(res.error);
         });
     }
 
@@ -145,9 +142,18 @@ export function PaymentPanel({ order }: { order: OrderDetail }) {
                 <dd className="font-medium">{amount}</dd>
                 {order.paymentDueAt && awaiting && (
                     <>
-                        <dt className="text-muted-foreground">Échéance virement</dt>
+                        <dt className="text-muted-foreground">Réservée jusqu&apos;au</dt>
                         <dd className={order.paymentDueAt < new Date() ? "text-destructive font-medium" : ""}>
                             {dateFmt.format(order.paymentDueAt)}
+                        </dd>
+                    </>
+                )}
+                {order.paymentReminderCount > 0 && (
+                    <>
+                        <dt className="text-muted-foreground">Relances</dt>
+                        <dd>
+                            {order.paymentReminderCount}
+                            {order.lastPaymentReminderAt && `, dernière le ${dateFmt.format(order.lastPaymentReminderAt)}`}
                         </dd>
                     </>
                 )}
@@ -184,9 +190,20 @@ export function PaymentPanel({ order }: { order: OrderDetail }) {
                         <IconCircleCheck size={15} className="mr-1.5" /> Confirmer le paiement reçu
                     </Button>
                 )}
-                {order.paymentMethod === "BANK_TRANSFER" && (status === "PENDING" || status === "FAILED") && (
-                    <Button size="sm" variant="outline" disabled={pending} onClick={() => run(() => resendPaymentEmail(order.id), "RIB renvoyé au client.", false)}>
-                        <IconMailForward size={15} className="mr-1.5" /> Renvoyer le RIB
+                {(order.paymentMethod === "BANK_TRANSFER" || isCard) && (status === "PENDING" || status === "FAILED") && (
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={pending}
+                        onClick={() =>
+                            run(
+                                () => remindCustomer(order.id),
+                                isCard ? "Lien de paiement renvoyé au client." : "Relance envoyée avec le RIB.",
+                                false,
+                            )
+                        }
+                    >
+                        <IconMailForward size={15} className="mr-1.5" /> Relancer le client
                     </Button>
                 )}
                 {status === "PAID" && (
@@ -221,8 +238,8 @@ export function PaymentPanel({ order }: { order: OrderDetail }) {
                                             </span>
                                         </span>
                                     </span>
-                                    <Button size="sm" variant="outline" disabled={pending} onClick={() => openProof(p.id)}>
-                                        Ouvrir
+                                    <Button size="sm" variant="outline" disabled={pending} onClick={() => openProof(p.id, p.originalName)}>
+                                        <IconEye size={15} className="mr-1.5" /> Voir
                                     </Button>
                                 </li>
                             ))}
@@ -348,6 +365,48 @@ export function PaymentPanel({ order }: { order: OrderDetail }) {
                             {pending && <IconLoader2 size={14} className="mr-1.5 animate-spin" />}
                             Confirmer
                         </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* ─── Aperçu justificatif ─────────────────────────────────── */}
+            <Dialog open={preview !== null} onOpenChange={(o) => !o && setPreview(null)}>
+                <DialogContent className="rounded-3xl sm:max-w-3xl">
+                    <DialogHeader>
+                        <DialogTitle className="truncate pr-6">{preview?.name}</DialogTitle>
+                        <DialogDescription>
+                            Vérifiez le montant ({amount}) et la référence {order.orderNumber}.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {preview && (
+                        <div className="overflow-hidden rounded-2xl border border-border bg-muted">
+                            {preview.isPdf ? (
+                                <iframe src={preview.url} title={preview.name} className="h-[70dvh] w-full" />
+                            ) : (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={preview.url} alt={preview.name} className="max-h-[70dvh] w-full object-contain" />
+                            )}
+                        </div>
+                    )}
+                    <DialogFooter>
+                        {preview && (
+                            <Button variant="outline" className="rounded-full" asChild>
+                                <a href={preview.downloadUrl} target="_blank" rel="noreferrer">
+                                    <IconDownload size={15} className="mr-1.5" /> Télécharger
+                                </a>
+                            </Button>
+                        )}
+                        {awaiting && (
+                            <Button
+                                className="rounded-full"
+                                onClick={() => {
+                                    setPreview(null);
+                                    openDialog({ kind: "confirm" });
+                                }}
+                            >
+                                <IconCircleCheck size={15} className="mr-1.5" /> Confirmer le paiement
+                            </Button>
+                        )}
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

@@ -1,4 +1,7 @@
+import { headers } from "next/headers";
 import { getLocale, getTranslations } from "next-intl/server";
+import { auth } from "@/lib/auth";
+import { countAwaitingPayment } from "@/lib/customer-orders";
 import { IconShoppingCart } from "@tabler/icons-react";
 import { Link, getPathname } from "@/i18n/routing";
 import { getSiteSettings } from "@/app/(admin)/dashboard/settings/actions";
@@ -11,13 +14,16 @@ import { AccountMenu } from "@/components/public/account-menu";
 import { ThemeToggle } from "@/components/public/theme-toggle";
 
 export async function SiteHeader() {
-    const [settings, cartCount, tNav, tHome, locale] = await Promise.all([
+    const [settings, cartCount, tNav, tHome, locale, session] = await Promise.all([
         getSiteSettings(),
         getCartCount(),
         getTranslations("nav"),
         getTranslations("home"),
         getLocale(),
+        auth.api.getSession({ headers: await headers() }),
     ]);
+    // Badge du compte : commandes du client qui attendent encore son paiement.
+    const awaitingPayment = session ? await countAwaitingPayment(session.user) : 0;
     const shopHref = getPathname({ href: "/shop", locale });
 
     const navLinks = [
@@ -69,6 +75,10 @@ export async function SiteHeader() {
                         loginAria={tNav("loginAria")}
                         accountAria={tNav("accountAria")}
                         dashboardLabel={tNav("dashboard")}
+                        ordersLabel={tNav("myOrders")}
+                        accountLabel={tNav("myAccount")}
+                        awaitingPayment={awaitingPayment}
+                        awaitingLabel={tNav("awaitingPayment", { count: awaitingPayment })}
                         logoutLabel={tNav("logout")}
                     />
 

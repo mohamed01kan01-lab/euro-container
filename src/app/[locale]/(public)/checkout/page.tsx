@@ -38,6 +38,20 @@ export default async function CheckoutPage() {
 
     const methods = availablePaymentMethods(settings);
 
+    // Client connecté : on reprend les coordonnées de sa dernière commande pour
+    // qu'il n'ait plus rien à ressaisir.
+    const lastOrder = session
+        ? await prisma.order.findFirst({
+              where: { userId: session.user.id },
+              orderBy: { createdAt: "desc" },
+              select: { customerPhone: true, shippingAddress: true },
+          })
+        : null;
+    const lastAddress =
+        lastOrder?.shippingAddress && typeof lastOrder.shippingAddress === "object" && !Array.isArray(lastOrder.shippingAddress)
+            ? (lastOrder.shippingAddress as Record<string, string | undefined>)
+            : {};
+
     if ((zones.length === 0 && pickupPoints.length === 0) || methods.length === 0) {
         return (
             <div className="mx-auto max-w-md px-4 py-24 text-center">
@@ -101,11 +115,21 @@ export default async function CheckoutPage() {
                 }))}
                 methods={methods}
                 currency={settings.currency}
+                vatRate={settings.vatRate}
                 paymentDueDays={settings.paymentDueDays}
                 supportPhone={settings.phone}
                 defaults={{
                     name: session?.user.name ?? "",
                     email: session?.user.email ?? "",
+                    phone: lastOrder?.customerPhone ?? "",
+                    company: lastAddress.company ?? "",
+                    vatNumber: lastAddress.vatNumber ?? "",
+                    // Un retrait n'a pas d'adresse client : on ne reprend que les livraisons.
+                    addressLine1: lastAddress.zone ? (lastAddress.line1 ?? "") : "",
+                    addressLine2: lastAddress.zone ? (lastAddress.line2 ?? "") : "",
+                    city: lastAddress.city ?? "",
+                    postalCode: lastAddress.postalCode ?? "",
+                    country: lastAddress.country ?? "France",
                 }}
             />
         </div>

@@ -29,8 +29,8 @@ type FormValues = z.infer<typeof schema>;
 export function LoginForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const raw = searchParams.get("callbackUrl") ?? "/dashboard";
-    const callbackUrl = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/dashboard";
+    const raw = searchParams.get("callbackUrl");
+    const requestedUrl = raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : null;
 
     const [serverError, setServerError] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
@@ -47,7 +47,7 @@ export function LoginForm() {
         setServerError(null);
 
         try {
-            const { error } = await authClient.signIn.email({
+            const { data, error } = await authClient.signIn.email({
                 email: values.email,
                 password: values.password,
             });
@@ -80,7 +80,11 @@ export function LoginForm() {
             // mémorisé la redirection vers /login émise par le layout admin quand
             // la session n'existait pas encore. Un rechargement complet renvoie la
             // requête au serveur avec le cookie de session fraîchement posé.
-            window.location.assign(callbackUrl);
+            // Sans destination demandée : l'équipe va au dashboard, les clients à leur compte.
+            const role = (data?.user as { role?: string } | undefined)?.role;
+            window.location.assign(
+                requestedUrl ?? (role === "ADMIN" || role === "EDITOR" ? "/dashboard" : "/account"),
+            );
         } catch (err) {
             const message = getThrownErrorMessage(err);
             setServerError(message);
@@ -93,7 +97,7 @@ export function LoginForm() {
             <header className="mb-6">
                 <h1 className="text-xl font-semibold">Connexion</h1>
                 <p className="text-sm text-muted-foreground mt-1">
-                    Accédez à votre espace NextPress
+                    Accédez à votre compte
                 </p>
             </header>
 

@@ -11,7 +11,7 @@ import { routing } from "@/i18n/routing";
 const handleI18nRouting = createIntlMiddleware(routing);
 
 const AUTH_ROUTES = ["/login", "/signup", "/forgot-password", "/reset-password", "/verify-email"];
-const PROTECTED_ROUTES = ["/dashboard", "/account"];
+const PROTECTED_ROUTES = ["/dashboard"];
 
 function isAuthRoute(path: string) {
     return AUTH_ROUTES.some((r) => path === r || path.startsWith(r + "/"));
@@ -21,16 +21,32 @@ function isProtectedRoute(path: string) {
     return PROTECTED_ROUTES.some((r) => path === r || path.startsWith(r + "/"));
 }
 
+/** Espace client : protégé comme l'admin, mais localisé (/account, /en/account). */
+function isAccountRoute(path: string) {
+    const bare = path.replace(/^\/en(?=\/|$)/, "") || "/";
+    return bare === "/account" || bare.startsWith("/account/");
+}
+
 function roleRedirect(role: string): string {
-    // Redirection optimiste uniquement : le layout admin revalide la session et
-    // le rôle côté serveur, et renvoie les non-admins vers "/".
-    // Sans rôle connu, on vise /dashboard — /account n'existe pas encore.
-    if (role === "CLIENT") return "/";
+    // Redirection optimiste uniquement : les layouts revalident la session et
+    // le rôle côté serveur.
+    if (role === "CLIENT") return "/account";
     return "/dashboard";
 }
 
 export async function proxy(req: NextRequest) {
     const path = req.nextUrl.pathname;
+
+    if (isAccountRoute(path)) {
+        if (!getSessionCookie(req)) {
+            const url = req.nextUrl.clone();
+            url.pathname = "/login";
+            url.search = "";
+            url.searchParams.set("callbackUrl", path);
+            return NextResponse.redirect(url);
+        }
+        return handleI18nRouting(req);
+    }
 
     // Espace admin/auth : non localisé, on ne fait jamais passer next-intl dessus.
     if (isProtectedRoute(path) || isAuthRoute(path)) {

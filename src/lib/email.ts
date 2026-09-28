@@ -1,10 +1,11 @@
 import { Resend } from "resend";
-import type { Role } from "@prisma/client";
+import type { Role, SiteSettings } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { ROLE_LABELS } from "@/lib/roles";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = process.env.RESEND_FROM ?? "NextPress <noreply@nextpress.dev>";
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+const FROM = process.env.RESEND_FROM ?? "Euro Container Market <noreply@eurocontainermarket.com>";
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
 // ─── Envoi ───────────────────────────────────────────────────────────────────
 
@@ -34,7 +35,122 @@ export async function send(payload: {
     }
 }
 
-// ─── Senders ─────────────────────────────────────────────────────────────────
+// ─── Mise en page commune ────────────────────────────────────────────────────
+// Partagée par les emails de compte (ici) et de commande (order-emails.ts).
+
+export const esc = (v: string) =>
+    v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+export const EMAIL_COLORS = {
+    ink: "#0F172A",
+    muted: "#64748B",
+    line: "#E2E8F0",
+    soft: "#F8FAFC",
+    accent: "#EA580C",
+};
+const C = EMAIL_COLORS;
+
+export interface EmailBrand {
+    siteName: string;
+    contactEmail: string | null;
+    phone: string | null;
+    /** Raison sociale, forme, SIRET… : pied de page des emails. */
+    legalLine: string | null;
+}
+
+export function brandFromSettings(s: SiteSettings): EmailBrand {
+    const legal = [
+        s.legalName && [s.legalName, s.legalForm].filter(Boolean).join(" "),
+        s.legalCapital && `capital ${s.legalCapital}`,
+        s.legalSiret && `SIRET ${s.legalSiret}`,
+        s.legalVatNumber && `TVA ${s.legalVatNumber}`,
+    ].filter(Boolean);
+    return {
+        siteName: s.siteName,
+        contactEmail: s.contactEmail,
+        phone: s.phone,
+        legalLine: legal.length ? legal.join(" · ") : null,
+    };
+}
+
+/**
+ * Lecture directe en base plutôt que getSiteSettings() : ce module est importé
+ * par lib/auth, et les actions de réglages importent lib/auth (import circulaire).
+ */
+async function loadBrand(): Promise<EmailBrand> {
+    const s = await prisma.siteSettings.findUnique({ where: { id: "singleton" } });
+    return s
+        ? brandFromSettings(s)
+        : { siteName: "Euro Container Market", contactEmail: null, phone: null, legalLine: null };
+}
+
+export interface RenderEmailOptions {
+    brand: EmailBrand;
+    preheader: string;
+    /** HTML autorisé : les valeurs dynamiques doivent être passées par esc(). */
+    title: string;
+    intro: string;
+    body?: string;
+    ctas?: { label: string; url: string; secondary?: boolean }[];
+}
+
+export function renderEmail({ brand, preheader, title, intro, body = "", ctas = [] }: RenderEmailOptions) {
+    const buttons = ctas
+        .map((c) =>
+            c.secondary
+                ? `<a href="${c.url}" style="display:inline-block;margin:0 8px 8px 0;border:2px solid ${C.line};color:${C.ink};text-decoration:none;padding:11px 22px;border-radius:999px;font-size:14px;font-weight:700;">${esc(c.label)}</a>`
+                : `<a href="${c.url}" style="display:inline-block;margin:0 8px 8px 0;background:${C.accent};color:#fff;text-decoration:none;padding:13px 26px;border-radius:999px;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">${esc(c.label)}</a>`,
+        )
+        .join("");
+
+    const contact = [brand.contactEmail, brand.phone].filter(Boolean).join(" · ");
+
+    return `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:${C.soft};font-family:Arial,Helvetica,sans-serif;">
+  <span style="display:none;max-height:0;overflow:hidden;opacity:0;">${esc(preheader)}</span>
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:${C.soft};padding:32px 12px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;background:#fff;border-radius:24px;padding:36px 28px;">
+        <tr><td style="padding-bottom:20px;border-bottom:1px solid ${C.line};">
+          <p style="margin:0;font-size:20px;font-weight:700;color:${C.ink};">
+            <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${C.accent};margin-right:8px;"></span>${esc(brand.siteName)}
+          </p>
+        </td></tr>
+        <tr><td style="padding-top:26px;">
+          <p style="margin:0 0 10px;font-size:22px;line-height:1.3;font-weight:700;color:${C.ink};">${title}</p>
+          <p style="margin:0 0 22px;font-size:15px;line-height:1.6;color:${C.muted};">${intro}</p>
+          ${body}
+          ${buttons ? `<div style="margin-top:24px;">${buttons}</div>` : ""}
+        </td></tr>
+        <tr><td style="padding-top:28px;">
+          <p style="margin:0;padding-top:18px;border-top:1px solid ${C.line};font-size:12px;line-height:1.6;color:#94A3B8;">
+            Une question ? Répondez simplement à cet email${contact ? ` ou contactez-nous : ${esc(contact)}` : ""}.
+            ${brand.legalLine ? `<br>${esc(brand.legalLine)}` : ""}
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+export function kvTable(rows: [string, string][], highlightLast = false) {
+    return `<table width="100%" cellpadding="0" cellspacing="0" style="background:${C.soft};border:1px solid ${C.line};border-radius:16px;padding:6px 16px;margin-bottom:18px;">
+${rows
+    .map(
+        ([k, v], i) => `<tr>
+  <td style="padding:9px 0;font-size:13px;color:${C.muted};vertical-align:top;${i < rows.length - 1 ? `border-bottom:1px solid ${C.line};` : ""}">${esc(k)}</td>
+  <td style="padding:9px 0 9px 12px;font-size:14px;color:${highlightLast && i === rows.length - 1 ? C.accent : C.ink};font-weight:700;text-align:right;${i < rows.length - 1 ? `border-bottom:1px solid ${C.line};` : ""}">${v}</td>
+</tr>`,
+    )
+    .join("")}
+</table>`;
+}
+
+// ─── Emails de compte ────────────────────────────────────────────────────────
 
 export async function sendVerificationOtpEmail({
     email,
@@ -51,18 +167,44 @@ export async function sendVerificationOtpEmail({
         "sign-in": "Votre code de connexion",
         "change-email": "Confirmez votre nouvel email",
     };
+    const messages: Record<string, string> = {
+        "email-verification": "Saisissez ce code pour vérifier votre adresse email.",
+        "forget-password": "Saisissez ce code pour réinitialiser votre mot de passe.",
+        "sign-in": "Saisissez ce code pour vous connecter.",
+        "change-email": "Saisissez ce code pour confirmer votre nouvel email.",
+    };
+    const brand = await loadBrand();
     await send({
         to: email,
-        subject: subjects[type] ?? "Votre code de vérification",
-        html: otpHtml(otp, type),
+        subject: `${subjects[type] ?? "Votre code de vérification"} : ${otp}`,
+        html: renderEmail({
+            brand,
+            preheader: `Votre code : ${otp}`,
+            title: "Votre code de vérification",
+            intro: messages[type] ?? "Saisissez ce code pour continuer.",
+            body: `<div style="background:${C.soft};border:2px solid ${C.line};border-radius:18px;padding:22px;text-align:center;margin-bottom:18px;">
+  <span style="font-size:38px;font-weight:700;letter-spacing:12px;color:${C.accent};font-family:monospace;">${esc(otp)}</span>
+</div>
+<p style="margin:0;font-size:13px;line-height:1.6;color:#94A3B8;">Ce code expire dans <strong>5 minutes</strong>. Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.</p>`,
+        }),
     });
 }
 
 export async function sendWelcomeEmail({ email, name }: { email: string; name: string }) {
+    const brand = await loadBrand();
     await send({
         to: email,
-        subject: "Bienvenue sur NextPress 🎉",
-        html: welcomeHtml(name),
+        subject: `Bienvenue chez ${brand.siteName}`,
+        html: renderEmail({
+            brand,
+            preheader: "Votre compte est prêt.",
+            title: `Bienvenue, ${esc(name.split(" ")[0])}`,
+            intro: "Votre compte est prêt. Retrouvez-y vos commandes, finalisez un paiement ou envoyez un justificatif de virement en quelques clics. Au prochain achat, vos coordonnées seront déjà remplies.",
+            ctas: [
+                { label: "Accéder à mon compte", url: `${APP_URL}/account` },
+                { label: "Voir les conteneurs", url: `${APP_URL}/shop`, secondary: true },
+            ],
+        }),
     });
 }
 
@@ -84,10 +226,23 @@ export async function sendAccountCreatedEmail({
     password: string;
     invitedBy: string;
 }) {
+    const brand = await loadBrand();
     await send({
         to: email,
-        subject: "Votre accès à NextPress",
-        html: accountCreatedHtml({ email, name, role, password, invitedBy }),
+        subject: `Votre accès à ${brand.siteName}`,
+        html: renderEmail({
+            brand,
+            preheader: "Vos identifiants de connexion.",
+            title: `Bonjour ${esc(name)},`,
+            intro: `${esc(invitedBy)} vous a créé un compte <strong style="color:${C.ink};">${esc(ROLE_LABELS[role])}</strong> sur ${esc(brand.siteName)}. Voici vos identifiants de connexion.`,
+            body:
+                kvTable([
+                    ["Email", esc(email)],
+                    ["Mot de passe", `<span style="font-family:monospace;">${esc(password)}</span>`],
+                ]) +
+                `<p style="margin:0;font-size:13px;line-height:1.6;color:#94A3B8;">À votre première connexion, un code à 6 chiffres vous sera envoyé pour confirmer votre adresse. Pensez à changer ce mot de passe une fois connecté.</p>`,
+            ctas: [{ label: "Se connecter", url: `${APP_URL}/login` }],
+        }),
     });
 }
 
@@ -110,187 +265,20 @@ export async function sendContactMessageEmail({
     subject: string;
     message: string;
 }) {
+    const brand = await loadBrand();
     await send({
         to,
         subject: `[${siteName}] ${subject}`,
-        html: contactMessageHtml({ siteName, fromName, fromEmail, subject, message }),
         replyTo: fromEmail,
+        html: renderEmail({
+            brand,
+            preheader: `${fromName} : ${subject}`,
+            title: "Nouveau message via le formulaire de contact",
+            intro: esc(subject),
+            body:
+                kvTable([["De", `${esc(fromName)} &lt;${esc(fromEmail)}&gt;`]]) +
+                `<p style="margin:0;font-size:15px;color:${C.ink};line-height:1.7;white-space:pre-wrap;">${esc(message)}</p>
+<p style="margin:24px 0 0;font-size:13px;color:#94A3B8;line-height:1.6;">Répondre à cet email revient directement à ${esc(fromEmail)}.</p>`,
+        }),
     });
-}
-
-// ─── Templates ───────────────────────────────────────────────────────────────
-
-function otpHtml(otp: string, type: string) {
-    const messages: Record<string, string> = {
-        "email-verification": "Entrez ce code pour vérifier votre adresse email.",
-        "forget-password": "Entrez ce code pour réinitialiser votre mot de passe.",
-        "sign-in": "Entrez ce code pour vous connecter.",
-        "change-email": "Entrez ce code pour confirmer votre nouvel email.",
-    };
-    const message = messages[type] ?? "Entrez ce code pour continuer.";
-
-    return `<!DOCTYPE html>
-<html lang="fr">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#F8FAFC;font-family:Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8FAFC;padding:40px 20px;">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;padding:48px 40px;box-shadow:0 1px 3px rgba(0,0,0,.08);">
-        <tr><td style="padding-bottom:32px;border-bottom:1px solid #F1F5F9;">
-          <p style="margin:0;font-size:22px;font-weight:700;color:#0F172A;">NextPress</p>
-        </td></tr>
-        <tr><td style="padding-top:32px;">
-          <p style="margin:0 0 8px;font-size:18px;font-weight:600;color:#0F172A;">Votre code de vérification</p>
-          <p style="margin:0 0 32px;font-size:15px;color:#64748B;line-height:1.6;">${message}</p>
-          <div style="background:#EFF6FF;border:2px solid #BFDBFE;border-radius:10px;padding:24px;text-align:center;margin-bottom:32px;">
-            <span style="font-size:40px;font-weight:700;letter-spacing:14px;color:#2563EB;">${otp}</span>
-          </div>
-          <p style="margin:0;font-size:13px;color:#94A3B8;line-height:1.6;">Ce code expire dans <strong>5 minutes</strong>.<br>Si vous n'avez pas effectué cette action, ignorez cet email.</p>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
-}
-
-function welcomeHtml(name: string) {
-    return `<!DOCTYPE html>
-<html lang="fr">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#F8FAFC;font-family:Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8FAFC;padding:40px 20px;">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;padding:48px 40px;box-shadow:0 1px 3px rgba(0,0,0,.08);">
-        <tr><td style="padding-bottom:32px;border-bottom:1px solid #F1F5F9;">
-          <p style="margin:0;font-size:22px;font-weight:700;color:#0F172A;">NextPress</p>
-        </td></tr>
-        <tr><td style="padding-top:32px;">
-          <p style="margin:0 0 8px;font-size:18px;font-weight:600;color:#0F172A;">Bienvenue, ${name} 👋</p>
-          <p style="margin:0 0 24px;font-size:15px;color:#64748B;line-height:1.6;">Votre compte est prêt. Vérifiez votre email pour activer votre compte, puis accédez à votre espace.</p>
-          <a href="${APP_URL}/login" style="display:inline-block;background:#2563EB;color:#fff;text-decoration:none;padding:13px 28px;border-radius:8px;font-size:15px;font-weight:600;">Accéder à mon espace →</a>
-        </td></tr>
-        <tr><td style="padding-top:40px;border-top:1px solid #F1F5F9;margin-top:40px;">
-          <p style="margin:16px 0 0;font-size:13px;color:#94A3B8;line-height:1.6;">
-            NextPress — L'alternative moderne à WordPress.<br>
-            Liberté totale sur votre frontend, zéro thème payant.
-          </p>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
-}
-
-function contactMessageHtml({
-    siteName,
-    fromName,
-    fromEmail,
-    subject,
-    message,
-}: {
-    siteName: string;
-    fromName: string;
-    fromEmail: string;
-    subject: string;
-    message: string;
-}) {
-    const escape = (value: string) =>
-        value
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;");
-
-    return `<!DOCTYPE html>
-<html lang="fr">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#F8FAFC;font-family:Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8FAFC;padding:40px 20px;">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;padding:48px 40px;box-shadow:0 1px 3px rgba(0,0,0,.08);">
-        <tr><td style="padding-bottom:32px;border-bottom:1px solid #F1F5F9;">
-          <p style="margin:0;font-size:22px;font-weight:700;color:#0F172A;">${escape(siteName)}</p>
-        </td></tr>
-        <tr><td style="padding-top:32px;">
-          <p style="margin:0 0 8px;font-size:18px;font-weight:600;color:#0F172A;">Nouveau message via le formulaire de contact</p>
-          <p style="margin:0 0 24px;font-size:15px;color:#64748B;line-height:1.6;">${escape(subject)}</p>
-
-          <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:20px;margin-bottom:24px;">
-            <tr><td style="padding-bottom:12px;">
-              <p style="margin:0 0 4px;font-size:12px;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;">De</p>
-              <p style="margin:0;font-size:15px;color:#0F172A;font-weight:600;">${escape(fromName)} &lt;${escape(fromEmail)}&gt;</p>
-            </td></tr>
-          </table>
-
-          <p style="margin:0;font-size:15px;color:#0F172A;line-height:1.7;white-space:pre-wrap;">${escape(message)}</p>
-
-          <p style="margin:28px 0 0;font-size:13px;color:#94A3B8;line-height:1.6;">Répondre à cet email revient directement à ${escape(fromEmail)}.</p>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
-}
-
-function accountCreatedHtml({
-    email,
-    name,
-    role,
-    password,
-    invitedBy,
-}: {
-    email: string;
-    name: string;
-    role: Role;
-    password: string;
-    invitedBy: string;
-}) {
-    return `<!DOCTYPE html>
-<html lang="fr">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#F8FAFC;font-family:Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8FAFC;padding:40px 20px;">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;padding:48px 40px;box-shadow:0 1px 3px rgba(0,0,0,.08);">
-        <tr><td style="padding-bottom:32px;border-bottom:1px solid #F1F5F9;">
-          <p style="margin:0;font-size:22px;font-weight:700;color:#0F172A;">NextPress</p>
-        </td></tr>
-        <tr><td style="padding-top:32px;">
-          <p style="margin:0 0 8px;font-size:18px;font-weight:600;color:#0F172A;">Bonjour ${name},</p>
-          <p style="margin:0 0 24px;font-size:15px;color:#64748B;line-height:1.6;">
-            ${invitedBy} vous a créé un compte <strong style="color:#0F172A;">${ROLE_LABELS[role]}</strong> sur NextPress.
-            Voici vos identifiants de connexion.
-          </p>
-
-          <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:20px;margin-bottom:28px;">
-            <tr><td style="padding-bottom:12px;">
-              <p style="margin:0 0 4px;font-size:12px;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;">Email</p>
-              <p style="margin:0;font-size:15px;color:#0F172A;font-weight:600;">${email}</p>
-            </td></tr>
-            <tr><td>
-              <p style="margin:0 0 4px;font-size:12px;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;">Mot de passe</p>
-              <p style="margin:0;font-size:15px;color:#0F172A;font-weight:600;font-family:monospace;">${password}</p>
-            </td></tr>
-          </table>
-
-          <a href="${APP_URL}/login" style="display:inline-block;background:#2563EB;color:#fff;text-decoration:none;padding:13px 28px;border-radius:8px;font-size:15px;font-weight:600;">Se connecter →</a>
-
-          <p style="margin:28px 0 0;font-size:13px;color:#94A3B8;line-height:1.6;">
-            À votre première connexion, un code de vérification à 6 chiffres vous sera envoyé par email pour confirmer votre adresse.<br>
-            Pensez à changer ce mot de passe une fois connecté.
-          </p>
-        </td></tr>
-        <tr><td style="padding-top:40px;border-top:1px solid #F1F5F9;margin-top:40px;">
-          <p style="margin:16px 0 0;font-size:13px;color:#94A3B8;line-height:1.6;">
-            NextPress — L'alternative moderne à WordPress.<br>
-            Liberté totale sur votre frontend, zéro thème payant.
-          </p>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
 }

@@ -221,6 +221,25 @@ model SiteSettings {
   bankAddress         String?
   /// Nombre de jours pendant lesquels une commande par virement reste réservée.
   paymentDueDays      Int      @default(7)
+  /// Relances automatiques des commandes impayées (cron Vercel quotidien).
+  paymentRemindersEnabled Boolean @default(true)
+  /// Annule les commandes impayées après la date limite + le délai de grâce.
+  autoCancelUnpaid    Boolean  @default(false)
+  autoCancelGraceDays Int      @default(2)
+  /// Taux de TVA (%) appliqué aux prix, saisis HT.
+  vatRate             Int      @default(20)
+  /// Informations légales : mentions légales, CGV, pied de page, emails.
+  legalName           String?
+  legalForm           String?
+  legalCapital        String?
+  legalSiret          String?
+  legalRcs            String?
+  legalVatNumber      String?
+  legalAddress        String?
+  publicationDirector String?
+  hostInfo            String?
+  mediatorName        String?
+  mediatorUrl         String?
   robotsTxt           String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
@@ -540,6 +559,10 @@ model Order {
   subtotal        Decimal        @db.Decimal(10, 2)
   shippingCost    Decimal        @default(0) @db.Decimal(10, 2)
   discount        Decimal        @default(0) @db.Decimal(10, 2)
+  /// Prix saisis HT : subtotal, shippingCost et discount sont HT, total est TTC.
+  /// Les commandes antérieures à la TVA ont taxRate = 0.
+  taxRate         Decimal        @default(0) @db.Decimal(5, 2)
+  taxAmount       Decimal        @default(0) @db.Decimal(10, 2)
   total           Decimal        @db.Decimal(10, 2)
   currency        String         @default("EUR")
   paymentStatus   PaymentStatus  @default(PENDING)
@@ -552,6 +575,9 @@ model Order {
   paymentDueAt    DateTime?
   paidAt          DateTime?
   cancelledAt     DateTime?
+  /// Relances de paiement envoyées (automatiques et manuelles).
+  paymentReminderCount  Int       @default(0)
+  lastPaymentReminderAt DateTime?
   shippingStatus  ShippingStatus @default(PENDING)
   shippingMethod  ShippingMethod @default(DELIVERY)
   shippingZoneId  String?

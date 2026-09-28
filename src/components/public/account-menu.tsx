@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { IconUser, IconLayoutDashboard, IconLogout } from "@tabler/icons-react";
+import { IconUser, IconLayoutDashboard, IconLogout, IconPackage, IconUserCircle } from "@tabler/icons-react";
+import NextLink from "next/link";
 import { Link } from "@/i18n/routing";
 import { useSession, signOut } from "@/lib/auth-client";
 import {
@@ -14,17 +15,31 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const iconButtonClass =
-    "flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground";
+    "relative flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground";
 
 type AccountMenuProps = {
     loginAria: string;
     accountAria: string;
     dashboardLabel: string;
+    ordersLabel: string;
+    accountLabel: string;
     logoutLabel: string;
+    /** Commandes du client en attente de paiement (calculé côté serveur). */
+    awaitingPayment: number;
+    awaitingLabel: string;
 };
 
-/** Icône compte du header : lien /login si déconnecté, menu (tableau de bord / déconnexion) sinon. */
-export function AccountMenu({ loginAria, accountAria, dashboardLabel, logoutLabel }: AccountMenuProps) {
+/** Icône compte du header : lien /login si déconnecté, menu sinon, avec badge des paiements en attente. */
+export function AccountMenu({
+    loginAria,
+    accountAria,
+    dashboardLabel,
+    ordersLabel,
+    accountLabel,
+    logoutLabel,
+    awaitingPayment,
+    awaitingLabel,
+}: AccountMenuProps) {
     const { data: session, isPending } = useSession();
     const router = useRouter();
 
@@ -34,9 +49,9 @@ export function AccountMenu({ loginAria, accountAria, dashboardLabel, logoutLabe
 
     if (!session) {
         return (
-            <Link href="/login" aria-label={loginAria} className={iconButtonClass}>
+            <NextLink href="/login" aria-label={loginAria} className={iconButtonClass}>
                 <IconUser size={19} />
-            </Link>
+            </NextLink>
         );
     }
 
@@ -45,20 +60,46 @@ export function AccountMenu({ loginAria, accountAria, dashboardLabel, logoutLabe
 
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger aria-label={accountAria} className={iconButtonClass}>
+            <DropdownMenuTrigger
+                aria-label={awaitingPayment > 0 ? `${accountAria}, ${awaitingLabel}` : accountAria}
+                className={iconButtonClass}
+            >
                 <IconUser size={19} />
+                {awaitingPayment > 0 && (
+                    <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-orange-600 px-1 text-[10px] font-bold text-white ring-2 ring-background">
+                        {awaitingPayment}
+                    </span>
+                )}
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="w-56 rounded-2xl">
                 <DropdownMenuLabel className="truncate">{session.user.name}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                    <Link href="/account">
+                        <IconUserCircle size={16} />
+                        {accountLabel}
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link href="/orders" className="flex w-full items-center">
+                        <IconPackage size={16} />
+                        <span className="flex-1">{ordersLabel}</span>
+                        {awaitingPayment > 0 && (
+                            <span className="rounded-full bg-orange-600 px-1.5 text-[10px] font-bold text-white">
+                                {awaitingPayment}
+                            </span>
+                        )}
+                    </Link>
+                </DropdownMenuItem>
                 {isStaff && (
                     <DropdownMenuItem asChild>
-                        <Link href="/dashboard">
+                        <NextLink href="/dashboard">
                             <IconLayoutDashboard size={16} />
                             {dashboardLabel}
-                        </Link>
+                        </NextLink>
                     </DropdownMenuItem>
                 )}
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                     onSelect={() => {
                         void signOut().then(() => {

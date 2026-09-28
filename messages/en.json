@@ -11,9 +11,12 @@
         "loginAria": "Log in",
         "accountAria": "My account",
         "dashboard": "Dashboard",
+        "myOrders": "My orders",
         "logout": "Log out",
         "themeLight": "Switch to light mode",
-        "themeDark": "Switch to dark mode"
+        "themeDark": "Switch to dark mode",
+        "myAccount": "My account",
+        "awaitingPayment": "{count, plural, one {# order awaiting payment} other {# orders awaiting payment}}"
     },
     "footer": {
         "copyright": "© {year} {siteName}",
@@ -26,7 +29,9 @@
         "navTitle": "Navigation",
         "legalTitle": "Information",
         "contactTitle": "Contact",
-        "followTitle": "Follow us"
+        "followTitle": "Follow us",
+        "legal": "Legal notice",
+        "privacy": "Privacy"
     },
     "common": {
         "conditionNew": "New",
@@ -63,7 +68,13 @@
         "trustDelivery": "Delivery & transport",
         "trustDeliveryDesc": "Shipping arranged wherever your project takes you.",
         "deliveryEyebrow": "Coverage",
-        "deliveryZones": ["France", "Belgium", "Germany", "Spain", "Luxembourg"],
+        "deliveryZones": [
+            "France",
+            "Belgium",
+            "Germany",
+            "Spain",
+            "Luxembourg"
+        ],
         "blogEyebrow": "Latest news",
         "blogTitle": "Latest news",
         "blogCta": "Visit the blog",
@@ -142,40 +153,441 @@
     },
     "faq": {
         "title": "Frequently asked questions",
-        "intro": "Answers to the most common questions about our containers, delivery, and orders.",
-        "items": [
+        "intro": "Ordering, payment, delivery, withdrawal: everything you need to buy your container with confidence.",
+        "contactTitle": "Can't find your answer?",
+        "contactText": "Our team replies quickly, by phone or email.",
+        "contactCta": "Contact us",
+        "categories": [
             {
-                "question": "What's the difference between a new and a used container?",
-                "answer": "A new container has never been used for maritime shipping. A used container has been in service but is always inspected and refurbished before sale."
+                "title": "Ordering and payment",
+                "items": [
+                    {
+                        "question": "How do I place an order?",
+                        "answer": "Add the container to your cart, enter your details and delivery method, then choose to pay by card or bank transfer. You immediately receive an email with your order number (EC-XXXXXXXX) and a link to track it."
+                    },
+                    {
+                        "question": "Are your prices excluding or including VAT?",
+                        "answer": "Prices are shown excluding VAT, with the price including VAT right below. VAT ({vat}%) is calculated at checkout on the order total, delivery included, and itemised in your summary and emails."
+                    },
+                    {
+                        "question": "Which payment methods do you accept?",
+                        "answer": "Credit and debit cards (Visa, Mastercard, Apple Pay, Google Pay) through our secure payment provider Stripe, and bank transfer. Card payment confirms your order immediately."
+                    },
+                    {
+                        "question": "Is card payment secure?",
+                        "answer": "Yes. You enter your card on Stripe's payment page, certified PCI-DSS level 1: your card details never pass through our site and we never see them. Your bank may ask for 3D Secure authentication."
+                    },
+                    {
+                        "question": "My card payment failed. What now?",
+                        "answer": "Nothing was charged and your order stays reserved. Open it from the email you received or from “My orders”: you can retry the payment in one click, or switch to bank transfer."
+                    }
+                ]
             },
             {
-                "question": "Do you deliver across Europe?",
-                "answer": "Yes, we arrange delivery to most European countries. Lead time and cost depend on the destination and are shown before you confirm your order."
+                "title": "Paying by bank transfer",
+                "items": [
+                    {
+                        "question": "How do I pay by bank transfer?",
+                        "answer": "As soon as you order, your order page and confirmation email show the full bank details (beneficiary, IBAN, BIC, bank) and the exact amount. Each detail copies in one click, and a QR code lets you prefill the transfer from your banking app."
+                    },
+                    {
+                        "question": "Which reference should I use?",
+                        "answer": "Your order number, formatted EC-XXXXXXXX. It lets us match your payment right away."
+                    },
+                    {
+                        "question": "How long is my order reserved?",
+                        "answer": "{days} days from the order date. We send you a reminder before the deadline. Without payment in that time, the order may be cancelled and the container put back on sale: you will be notified by email."
+                    },
+                    {
+                        "question": "How do I send proof of transfer?",
+                        "answer": "On your order page, click “I've made the transfer”. You can attach the screenshot or PDF from your bank (PDF, JPG, PNG or WEBP, 5 MB max). Proof is optional but speeds up validation."
+                    },
+                    {
+                        "question": "When is my order confirmed?",
+                        "answer": "As soon as the funds reach our account: usually 1 to 2 business days for a SEPA transfer, a few seconds for an instant transfer. You then receive a confirmation email and preparation starts."
+                    },
+                    {
+                        "question": "I'm paying from outside the eurozone.",
+                        "answer": "Use an international (SWIFT) transfer: the BIC and the bank and beneficiary addresses are listed under “International transfer” on your order. Any sending fees charged by your bank are yours: the amount received must match the order total."
+                    }
+                ]
             },
             {
-                "question": "Can I have a container customized (windows, insulation, electricity)?",
-                "answer": "Yes, we offer already-converted containers (office, bar, pool, home) and can look into specific customization requests."
+                "title": "Delivery and collection",
+                "items": [
+                    {
+                        "question": "Where do you deliver, and how fast?",
+                        "answer": "We deliver across France and several European countries. Delivery areas, prices and estimated lead times are shown at checkout, before any payment. Lead time starts once payment is confirmed."
+                    },
+                    {
+                        "question": "How does delivery work?",
+                        "answer": "The container is delivered by truck with suitable unloading equipment (flatbed, crane or loader arm depending on the case). We call you before dispatch to agree on a slot and check site access."
+                    },
+                    {
+                        "question": "What do I need on site?",
+                        "answer": "Access suitable for a heavy goods vehicle, level and stable ground, and enough clear space to manoeuvre and set the container down. We give you the exact dimensions when we call. Mention any constraint (gate, slope, power lines) in the order note."
+                    },
+                    {
+                        "question": "Can I collect the container myself?",
+                        "answer": "Yes, from our depot, by appointment. Bring a vehicle suitable for carrying a container; loading is handled on site."
+                    }
+                ]
             },
             {
-                "question": "What are the delivery lead times?",
-                "answer": "Lead times vary depending on the container type, availability, and destination. An accurate estimate is provided when you place your order."
+                "title": "Our containers",
+                "items": [
+                    {
+                        "question": "New vs used: what's the difference?",
+                        "answer": "A new (or “one trip”) container has seen little or no sea freight. A used container has already been in service: it is inspected before sale and its condition is described on the product page."
+                    },
+                    {
+                        "question": "Can I see the container before buying?",
+                        "answer": "Contact us: we can send extra photos or arrange a visit to the depot."
+                    },
+                    {
+                        "question": "Do you offer converted containers?",
+                        "answer": "Yes: offices, fitted storage, bars, homes, pools… We also quote for custom work (windows, insulation, electrics)."
+                    },
+                    {
+                        "question": "Do you rent containers?",
+                        "answer": "Contact our team to discuss a rental option suited to your project and its duration."
+                    }
+                ]
             },
             {
-                "question": "Do you offer container rental?",
-                "answer": "Get in touch with our team to discuss rental options suited to your project and its duration."
+                "title": "Cancellation, withdrawal and refunds",
+                "items": [
+                    {
+                        "question": "Can I cancel my order?",
+                        "answer": "As long as no payment has been received, yes: on your order page, click “Cancel my order”; it is free and immediate. After payment, request a refund from the same page."
+                    },
+                    {
+                        "question": "Do I have a right of withdrawal?",
+                        "answer": "Consumers have 14 days from receiving the container to withdraw, without giving a reason. Return costs are yours: we send you a collection quote. The right does not apply to containers converted or made to your specifications. Business purchases carry no right of withdrawal."
+                    },
+                    {
+                        "question": "How am I refunded?",
+                        "answer": "Card payments are refunded to the card used. Bank transfers are refunded to the account whose IBAN you give in the request form (it is stored encrypted). Refunds are issued within 14 days of approval; your bank may take 1 to 5 business days to show them."
+                    },
+                    {
+                        "question": "The container arrived damaged.",
+                        "answer": "Write precise reservations on the delivery note in front of the driver, take photos and contact us within 48 hours. You are also covered by the legal guarantees of conformity and against hidden defects."
+                    }
+                ]
+            },
+            {
+                "title": "Tracking and account",
+                "items": [
+                    {
+                        "question": "Do I need an account to order?",
+                        "answer": "No, you can check out as a guest. An account lets you find all your orders, complete a payment in one click and skip retyping your details."
+                    },
+                    {
+                        "question": "How do I track my order?",
+                        "answer": "Through the link in each of our emails, from your account, or on the “My orders” page with your order number and email."
+                    },
+                    {
+                        "question": "I didn't receive the confirmation email.",
+                        "answer": "Check your spam folder. You can also find your order from “My orders” with your number and email, or contact us."
+                    }
+                ]
+            },
+            {
+                "title": "Businesses",
+                "items": [
+                    {
+                        "question": "Can I order in my company's name?",
+                        "answer": "Yes: at checkout, click “I'm buying for a company” and enter its name and, if applicable, its EU VAT number. They will appear on your invoice."
+                    },
+                    {
+                        "question": "Will I get an invoice?",
+                        "answer": "Yes, an invoice is sent to you once payment is confirmed."
+                    },
+                    {
+                        "question": "My company is based in another EU country.",
+                        "answer": "If you have a valid EU VAT number, contact us before ordering: the sale can be invoiced without VAT under the reverse-charge mechanism."
+                    },
+                    {
+                        "question": "Do you offer volume pricing?",
+                        "answer": "Yes, contact us for a tailored quote when ordering several units or for recurring projects."
+                    }
+                ]
             }
         ]
     },
-    "returns": {
-        "title": "Returns policy",
-        "body": "Every container is inspected before shipping. If you notice an issue on delivery, contact us within 48 hours with photos: we'll review a return, exchange, or other resolution based on the situation."
-    },
-    "shipping": {
-        "title": "Shipping",
-        "body": "Transport is arranged by us to the destination given at checkout. Delivery times and costs depend on the container type, quantity, and location, and are shown before you confirm your order."
-    },
-    "terms": {
-        "title": "Terms of sale",
-        "body": "These terms govern container sales made through this site. For any question about an ongoing order or these terms, our team is available to help."
+    "legal": {
+        "todo": "[to be completed]",
+        "updated": "Last updated: September 2026",
+        "draftNotice": "Template document, to be reviewed by a legal professional.",
+        "notice": {
+            "title": "Legal notice",
+            "sections": [
+                {
+                    "title": "Publisher",
+                    "paragraphs": [
+                        "{siteName} is published by {company}, {legalForm} with a share capital of {capital}, registered with the {rcs} under SIRET number {siret}, whose registered office is at {address}.",
+                        "EU VAT number: {vatNumber}.",
+                        "Contact: {email} · {phone}."
+                    ]
+                },
+                {
+                    "title": "Publication director",
+                    "paragraphs": [
+                        "{director}"
+                    ]
+                },
+                {
+                    "title": "Hosting",
+                    "paragraphs": [
+                        "{host}"
+                    ]
+                },
+                {
+                    "title": "Intellectual property",
+                    "paragraphs": [
+                        "All content on this site (text, photos, logos, graphics) is protected by intellectual property law. Any reproduction, even partial, without prior written consent from {company} is prohibited."
+                    ]
+                },
+                {
+                    "title": "Personal data",
+                    "paragraphs": [
+                        "How we process your personal data is described in our privacy policy."
+                    ]
+                }
+            ]
+        },
+        "privacy": {
+            "title": "Privacy policy",
+            "sections": [
+                {
+                    "title": "Data controller",
+                    "paragraphs": [
+                        "{company}, {address}. For any question about your data: {email}."
+                    ]
+                },
+                {
+                    "title": "Data we collect",
+                    "list": [
+                        "Identity and contact: name, email, phone, company and VAT number where applicable.",
+                        "Delivery: address and site access information you provide.",
+                        "Orders and payments: order contents, amounts, transfer receipts you choose to upload, IBAN provided for a refund (stored encrypted).",
+                        "Customer account: login credentials (passwords are stored irreversibly hashed).",
+                        "Strictly necessary technical data: session, cart and display preference cookies."
+                    ]
+                },
+                {
+                    "title": "Purposes and legal bases",
+                    "list": [
+                        "Processing orders, payments, deliveries and refunds: performance of contract.",
+                        "Sending order-related emails (confirmation, payment reminders, tracking): performance of contract.",
+                        "Answering your messages: legitimate interest.",
+                        "Keeping accounting records: legal obligation."
+                    ]
+                },
+                {
+                    "title": "Recipients",
+                    "paragraphs": [
+                        "Your data is never sold. It is accessible to our team and to our processors, strictly for their task:"
+                    ],
+                    "list": [
+                        "Stripe (card payments): your card details are entered and processed directly by Stripe.",
+                        "Resend (email delivery).",
+                        "Cloudinary (secure storage of transfer receipts).",
+                        "Vercel (website hosting).",
+                        "Our carriers, for delivery.",
+                        "Google, only if you choose to display a map (Google Maps)."
+                    ]
+                },
+                {
+                    "title": "Transfers outside the EU",
+                    "paragraphs": [
+                        "Some processors are based in the United States. These transfers are covered by the EU–US Data Privacy Framework or the European Commission's standard contractual clauses."
+                    ]
+                },
+                {
+                    "title": "Retention periods",
+                    "list": [
+                        "Order data and invoices: 10 years (accounting obligation).",
+                        "Customer account: until deleted, or 3 years after your last activity.",
+                        "Transfer receipts and refund IBANs: for the time needed to process the order, then accounting archive.",
+                        "Contact messages: 3 years."
+                    ]
+                },
+                {
+                    "title": "Your rights",
+                    "paragraphs": [
+                        "You have the right to access, rectify, erase, restrict, object to and port your data. You can delete your account at any time from “My account”, or exercise your rights by writing to {email}.",
+                        "You may also lodge a complaint with the French data protection authority, the CNIL (www.cnil.fr)."
+                    ]
+                },
+                {
+                    "title": "Cookies",
+                    "paragraphs": [
+                        "This site only uses cookies that are strictly necessary for it to work (session, cart, language, theme), which require no consent. Google Maps is only loaded if you click “Show map”; Google may then set its own cookies."
+                    ]
+                }
+            ]
+        },
+        "terms": {
+            "title": "Terms and conditions of sale",
+            "sections": [
+                {
+                    "title": "1. Scope",
+                    "paragraphs": [
+                        "These terms govern the sale of containers and related services on {siteName} between {company} (the “Seller”) and any buyer, whether a consumer (“Consumer”) or a business (“Business Customer”).",
+                        "Placing an order implies acceptance of the terms in force on the order date. Consumer-specific provisions (withdrawal, legal guarantees, mediation) do not apply to Business Customers."
+                    ]
+                },
+                {
+                    "title": "2. Products",
+                    "paragraphs": [
+                        "The key features of each container (dimensions, new or used condition, equipment) are described on its product page. Photos of used containers are as accurate as possible; minor cosmetic differences (marks, scratches, patina) are inherent to used equipment."
+                    ]
+                },
+                {
+                    "title": "3. Prices",
+                    "paragraphs": [
+                        "Prices are in euros excluding VAT; the price including VAT is shown alongside. VAT at the applicable rate ({vat}%) is applied to the order total, delivery included.",
+                        "Delivery charges depend on the selected area and are shown before the order is confirmed. The applicable price is the one displayed when ordering."
+                    ]
+                },
+                {
+                    "title": "4. Ordering",
+                    "paragraphs": [
+                        "The buyer selects products, enters their details and delivery method, chooses a payment method, then confirms by clicking “Pay” or “Order and pay by bank transfer”, which constitutes an order with an obligation to pay.",
+                        "A confirmation email summarising the order is sent to the buyer. The Seller may cancel an order in case of a previous payment dispute, an obvious pricing error or unavailability; the buyer is then refunded in full."
+                    ]
+                },
+                {
+                    "title": "5. Payment",
+                    "paragraphs": [
+                        "Payment is made by card through the secure provider Stripe, or by bank transfer.",
+                        "For bank transfers, the order is reserved for {days} days. If funds are not received in that time, the Seller may cancel the order and put the product back on sale; the buyer is informed by email.",
+                        "The order is confirmed upon receipt of full payment."
+                    ]
+                },
+                {
+                    "title": "6. Retention of title",
+                    "paragraphs": [
+                        "The Seller retains ownership of the products until the price has been paid in full."
+                    ]
+                },
+                {
+                    "title": "7. Delivery",
+                    "paragraphs": [
+                        "Delivery lead times are estimates and run from payment confirmation. The Seller contacts the buyer to agree on a slot.",
+                        "The buyer ensures access suitable for a heavy goods vehicle and a level, stable and clear drop-off area. If delivery is prevented by access conditions differing from those declared, additional travel costs may be charged.",
+                        "Risk passes to the buyer when the container is handed over to them or to the person they designate."
+                    ]
+                },
+                {
+                    "title": "8. Receipt and reservations",
+                    "paragraphs": [
+                        "The buyer checks the container on delivery. Any damage or missing item must be precisely noted on the delivery note and reported to the Seller, with photos, within 48 hours."
+                    ]
+                },
+                {
+                    "title": "9. Right of withdrawal (Consumers)",
+                    "paragraphs": [
+                        "Under Article L221-18 of the French Consumer Code, Consumers have 14 days from receipt of the product to withdraw, without giving reasons.",
+                        "They notify their decision by an unambiguous statement, for example from their order page (“Request a refund”), by email to {email}, or using the form below.",
+                        "Return costs are borne by the Consumer. The Seller refunds all sums paid, including initial delivery costs (up to the standard delivery rate), within 14 days of being informed of the withdrawal; the refund may be withheld until the product has been collected.",
+                        "Under Article L221-28 of the French Consumer Code, the right of withdrawal does not apply to containers made to the Consumer's specifications or clearly personalised.",
+                        "Withdrawal form: “To {company}, {address}, {email}: I hereby give notice that I withdraw from my contract for the sale of the following goods: order number, ordered on / received on, consumer name, consumer address, date and signature (if sent on paper).”"
+                    ]
+                },
+                {
+                    "title": "10. Legal guarantees (Consumers)",
+                    "paragraphs": [
+                        "Consumers benefit from the legal guarantee of conformity (Articles L217-3 et seq. of the French Consumer Code) for 2 years from delivery, and the guarantee against hidden defects (Articles 1641 et seq. of the French Civil Code) for 2 years from their discovery.",
+                        "For used goods, lack of conformity is presumed for 12 months."
+                    ]
+                },
+                {
+                    "title": "11. Business Customers",
+                    "paragraphs": [
+                        "For Business Customers, products are guaranteed against hidden defects under general law. The Seller's liability is limited to the amount of the order concerned, except in case of gross negligence or wilful misconduct."
+                    ]
+                },
+                {
+                    "title": "12. Personal data",
+                    "paragraphs": [
+                        "Data collected when ordering is processed in accordance with our privacy policy."
+                    ]
+                },
+                {
+                    "title": "13. Mediation (Consumers)",
+                    "paragraphs": [
+                        "In the event of a dispute, the Consumer first sends a written complaint to the Seller. Failing an amicable solution within two months, they may refer the matter free of charge to the consumer mediator: {mediatorName} ({mediatorUrl}). They may also use the EU online dispute resolution platform: https://ec.europa.eu/consumers/odr."
+                    ]
+                },
+                {
+                    "title": "14. Governing law",
+                    "paragraphs": [
+                        "These terms are governed by French law. For Business Customers, any dispute falls under the exclusive jurisdiction of the courts of the Seller's registered office."
+                    ]
+                }
+            ]
+        },
+        "returns": {
+            "title": "Returns, withdrawal and refunds",
+            "sections": [
+                {
+                    "title": "Before payment: instant cancellation",
+                    "paragraphs": [
+                        "As long as no payment has been received, you can cancel your order for free from its page, in one click. The container goes straight back on sale."
+                    ]
+                },
+                {
+                    "title": "14-day right of withdrawal (consumers)",
+                    "paragraphs": [
+                        "As a consumer, you have 14 days from receiving the container to withdraw, without giving a reason. Submit your request from your order page (“Request a refund”) or by email to {email}.",
+                        "Return costs are yours: we send you a collection quote. This right does not apply to containers converted or made to your specifications, nor to business purchases."
+                    ]
+                },
+                {
+                    "title": "Damaged or non-conforming container",
+                    "paragraphs": [
+                        "Write precise reservations on the delivery note, take photos and contact us within 48 hours. Depending on the situation, we offer repair, replacement or a refund, under the legal guarantees of conformity and against hidden defects."
+                    ]
+                },
+                {
+                    "title": "Refunds",
+                    "paragraphs": [
+                        "Card payment: refunded to the card used. Bank transfer: refunded to the account whose IBAN you enter in the request form (stored encrypted).",
+                        "Refunds are issued within 14 days of approval. You are kept informed by email at every step."
+                    ]
+                }
+            ]
+        },
+        "shipping": {
+            "title": "Delivery",
+            "sections": [
+                {
+                    "title": "Areas and prices",
+                    "paragraphs": [
+                        "We deliver across France and several European countries. Available areas, their prices (excluding VAT) and estimated lead times are shown at checkout, before any payment. Collection from our depot, by appointment, is also available."
+                    ]
+                },
+                {
+                    "title": "How it works",
+                    "paragraphs": [
+                        "Once payment is confirmed, we call you to agree on a slot and check site access. The container is delivered by truck with suitable unloading equipment."
+                    ]
+                },
+                {
+                    "title": "What you need on site",
+                    "paragraphs": [
+                        "Access suitable for a heavy goods vehicle, level and stable ground, and enough clear space to manoeuvre. Mention any constraint (gate, slope, power lines) in the order note."
+                    ]
+                },
+                {
+                    "title": "On delivery",
+                    "paragraphs": [
+                        "Check the container in front of the driver, note any reservations on the delivery note, and report them to us within 48 hours with photos."
+                    ]
+                }
+            ]
+        }
     }
 }

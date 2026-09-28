@@ -4,6 +4,7 @@ import { IconShoppingCartOff, IconArrowRight } from "@tabler/icons-react";
 import { getCart } from "@/lib/cart";
 import { getSiteSettings } from "@/app/(admin)/dashboard/settings/actions";
 import { formatPrice } from "@/lib/currency";
+import { taxOf } from "@/lib/tax";
 import { Button } from "@/components/public/button";
 import { Separator } from "@/components/ui/separator";
 import { CartLines } from "@/components/public/cart-lines";
@@ -42,7 +43,9 @@ export default async function CartPage() {
         );
     }
 
-    const total = Math.max(0, cart.subtotal - cart.discount);
+    const totalHt = Math.max(0, cart.subtotal - cart.discount);
+    const tax = taxOf(totalHt, settings.vatRate);
+    const total = totalHt + tax;
 
     return (
         <div className="mx-auto max-w-5xl px-4 py-10">
@@ -70,7 +73,7 @@ export default async function CartPage() {
                     <dl className="space-y-2 text-sm">
                         <div className="flex justify-between">
                             <dt className="text-muted-foreground">
-                                Sous-total ({cart.itemCount} article
+                                Sous-total HT ({cart.itemCount} article
                                 {cart.itemCount > 1 ? "s" : ""})
                             </dt>
                             <dd>{formatPrice(cart.subtotal, currency)}</dd>
@@ -83,29 +86,32 @@ export default async function CartPage() {
                             </div>
                         )}
 
-                        {cart.freeShipping && (
-                            <div className="flex justify-between text-primary">
-                                <dt>Livraison</dt>
-                                <dd>Offerte</dd>
-                            </div>
-                        )}
-
                         <div className="flex justify-between text-muted-foreground">
                             <dt>Livraison</dt>
-                            <dd className="text-xs">
-                                Calculée à l&apos;étape suivante
-                            </dd>
+                            {cart.freeShipping ? (
+                                <dd className="font-medium text-green-600">Offerte</dd>
+                            ) : (
+                                <dd className="text-xs">Calculée à l&apos;étape suivante</dd>
+                            )}
+                        </div>
+
+                        <div className="flex justify-between text-muted-foreground">
+                            <dt>TVA ({settings.vatRate} %)</dt>
+                            <dd>{formatPrice(tax, currency)}</dd>
                         </div>
                     </dl>
 
                     <Separator />
 
                     <div className="flex items-baseline justify-between">
-                        <span className="font-semibold">Total</span>
+                        <span className="font-semibold">Total TTC</span>
                         <span className="font-display text-2xl text-orange-600">
                             {formatPrice(total, currency)}
                         </span>
                     </div>
+                    <p className="-mt-2 text-right text-xs text-muted-foreground">
+                        soit {formatPrice(totalHt, currency)} HT, hors livraison
+                    </p>
 
                     <Button size="lg" variant="accent" className="w-full" asChild>
                         <Link href="/checkout">

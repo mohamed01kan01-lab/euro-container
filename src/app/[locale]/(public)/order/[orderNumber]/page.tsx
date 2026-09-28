@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import NextLink from "next/link";
 import QRCode from "qrcode";
 import {
     IconBuildingBank,
@@ -11,14 +13,16 @@ import {
     IconHourglass,
     IconReceiptRefund,
     IconTruck,
+    IconUserPlus,
     IconX,
 } from "@tabler/icons-react";
 import type { PaymentStatus, ShippingStatus } from "@prisma/client";
 import { Link } from "@/i18n/routing";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getSiteSettings } from "@/app/(admin)/dashboard/settings/actions";
 import { formatPrice } from "@/lib/currency";
-import { mapEmbedUrl } from "@/lib/maps";
+import { MapEmbed } from "@/components/public/map-embed";
 import { epcQrPayload } from "@/lib/bank";
 import {
     isBankTransferConfigured,
@@ -101,6 +105,13 @@ export default async function OrderPage({ params, searchParams }: PageProps) {
         getSiteSettings(),
     ]);
     if (!order) notFound();
+
+    const [session, existingUser] = await Promise.all([
+        auth.api.getSession({ headers: await headers() }),
+        prisma.user.findUnique({ where: { email: order.customerEmail }, select: { id: true } }),
+    ]);
+    const hasAccount = !!existingUser;
+    const hasTax = Number(order.taxAmount) > 0;
 
     const { currency, paymentStatus: status } = order;
     const total = Number(order.total);
@@ -238,7 +249,7 @@ export default async function OrderPage({ params, searchParams }: PageProps) {
                 <Separator className="my-4" />
                 <dl className="space-y-2 text-sm">
                     <div className="flex justify-between text-muted-foreground">
-                        <dt>Sous-total</dt>
+                        <dt>Sous-total{hasTax ? " HT" : ""}</dt>
                         <dd>{formatPrice(Number(order.subtotal), currency)}</dd>
                     </div>
                     {Number(order.discount) > 0 && (
@@ -251,9 +262,15 @@ export default async function OrderPage({ params, searchParams }: PageProps) {
                         <dt>Livraison</dt>
                         <dd>{Number(order.shippingCost) === 0 ? "Offerte" : formatPrice(Number(order.shippingCost), currency)}</dd>
                     </div>
+                    {hasTax && (
+                        <div className="flex justify-between text-muted-foreground">
+                            <dt>TVA ({Number(order.taxRate)} %)</dt>
+                            <dd>{formatPrice(Number(order.taxAmount), currency)}</dd>
+                        </div>
+                    )}
                     <Separator className="my-2" />
                     <div className="flex items-baseline justify-between">
-                        <dt className="font-semibold">Total</dt>
+                        <dt className="font-semibold">Total{hasTax ? " TTC" : ""}</dt>
                         <dd className="font-display text-2xl text-orange-600">{amountLabel}</dd>
                     </div>
                 </dl>
@@ -282,12 +299,10 @@ export default async function OrderPage({ params, searchParams }: PageProps) {
                             {order.pickupPoint.hours && <p className="text-muted-foreground">{order.pickupPoint.hours}</p>}
                         </div>
                         <div className="overflow-hidden rounded-[20px] border border-border">
-                            <iframe
-                                src={mapEmbedUrl(order.pickupPoint.address)}
+                            <MapEmbed
+                                address={order.pickupPoint.address}
                                 title={`Emplacement de ${order.pickupPoint.name}`}
-                                loading="lazy"
-                                className="h-52 w-full"
-                                referrerPolicy="no-referrer-when-downgrade"
+                                className="h-52"
                             />
                         </div>
                     </div>
@@ -305,6 +320,38 @@ export default async function OrderPage({ params, searchParams }: PageProps) {
                     </div>
                 )}
             </section>
+
+            {/* ─── Compte : invité → client suivi ────────────────────────── */}
+            {!session && status !== "CANCELLED" && (
+                <section className="mt-6 flex flex-col gap-4 rounded-[26px] border border-border bg-card p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                    <div className="flex items-start gap-3">
+                        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-orange-600/10 text-orange-600">
+                            <IconUserPlus size={20} />
+                        </span>
+                        <div>
+                            <p className="font-semibold">
+                                {hasAccount ? "Retrouvez toutes vos commandes" : "Suivez vos commandes en un coup d'œil"}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                                {hasAccount
+                                    ? `Un compte existe déjà pour ${order.customerEmail}.`
+                                    : "Créez votre compte : cette commande y sera rattachée et vos coordonnées pré-remplies la prochaine fois."}
+                            </p>
+                        </div>
+                    </div>
+                    <Button asChild variant={hasAccount ? "outline" : "default"} className="shrink-0">
+                        <NextLink
+                            href={
+                                hasAccount
+                                    ? `/login?callbackUrl=${encodeURIComponent("/account")}`
+                                    : `/signup?email=${encodeURIComponent(order.customerEmail)}&name=${encodeURIComponent(order.customerName)}`
+                            }
+                        >
+                            {hasAccount ? "Se connecter" : "Créer mon compte"}
+                        </NextLink>
+                    </Button>
+                </section>
+            )}
 
             {/* ─── Pied ──────────────────────────────────────────────────── */}
             <footer className="mt-8 flex flex-col items-center gap-4">

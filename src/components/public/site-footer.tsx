@@ -25,6 +25,7 @@ export async function SiteFooter() {
         { href: "/shop", label: tNav("shop") },
         { href: "/blog", label: tNav("blog") },
         { href: "/contact", label: tNav("contact") },
+        { href: "/orders", label: tNav("myOrders") },
     ];
 
     const legalLinks = [
@@ -33,6 +34,8 @@ export async function SiteFooter() {
         { href: "/returns", label: tFooter("returns") },
         { href: "/shipping", label: tFooter("shipping") },
         { href: "/terms", label: tFooter("terms") },
+        { href: "/legal", label: tFooter("legal") },
+        { href: "/privacy", label: tFooter("privacy") },
     ];
 
     const socialLinks = [
@@ -117,6 +120,17 @@ export async function SiteFooter() {
                         year: new Date().getFullYear(),
                         siteName: settings.siteName,
                     })}
+                    {settings.legalName && (
+                        <p className="mt-1">
+                            {[
+                                [settings.legalName, settings.legalForm].filter(Boolean).join(" "),
+                                settings.legalSiret && `SIRET ${settings.legalSiret}`,
+                                settings.legalVatNumber && `TVA ${settings.legalVatNumber}`,
+                            ]
+                                .filter(Boolean)
+                                .join(" · ")}
+                        </p>
+                    )}
                 </div>
             </div>
         </footer>
