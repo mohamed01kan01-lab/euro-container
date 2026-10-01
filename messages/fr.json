@@ -88,6 +88,16 @@
     "checkout": {},
     "blog": {},
     "order": {},
+    "contactWidget": {
+        "open": "Nous contacter",
+        "close": "Fermer",
+        "title": "Une question ?",
+        "subtitle": "Écrivez-nous, nous vous répondons rapidement.",
+        "whatsapp": "WhatsApp",
+        "whatsappHint": "Discuter en direct",
+        "email": "Email",
+        "message": "Bonjour {siteName}, j'ai une question :"
+    },
     "contact": {
         "title": "Contact",
         "intro": "Une question sur un conteneur, une commande en cours ou un projet sur mesure ? Notre équipe vous répond.",

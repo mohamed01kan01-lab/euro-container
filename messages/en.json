@@ -88,6 +88,16 @@
     "checkout": {},
     "blog": {},
     "order": {},
+    "contactWidget": {
+        "open": "Contact us",
+        "close": "Close",
+        "title": "Any questions?",
+        "subtitle": "Message us, we reply quickly.",
+        "whatsapp": "WhatsApp",
+        "whatsappHint": "Chat with us now",
+        "email": "Email",
+        "message": "Hello {siteName}, I have a question:"
+    },
     "contact": {
         "title": "Contact",
         "intro": "A question about a container, an ongoing order, or a custom project? Our team is here to help.",
