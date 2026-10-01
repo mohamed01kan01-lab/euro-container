@@ -180,6 +180,12 @@ export function PaymentPanel({ order }: { order: OrderDetail }) {
             {status === "VERIFYING" && (
                 <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
                     Le client a signalé son virement. Vérifiez sur votre compte qu&apos;un virement de {amount} avec la référence <span className="font-mono font-semibold">{order.orderNumber}</span> est arrivé.
+                    {/* Commandes signalées avant que le justificatif devienne obligatoire. */}
+                    {order.proofs.length === 0 && (
+                        <span className="mt-1 block font-semibold">
+                            Aucun justificatif joint : vérifiez directement sur votre relevé bancaire.
+                        </span>
+                    )}
                 </p>
             )}
 

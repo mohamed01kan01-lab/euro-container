@@ -12,7 +12,6 @@ import {
     notifyAdmin,
     sendOrderReceivedEmail,
     sendRefundRequestedEmail,
-    sendTransferDeclaredEmail,
 } from "@/lib/order-emails";
 
 /**
@@ -41,27 +40,9 @@ const NOT_FOUND = { ok: false as const, error: "Commande introuvable." };
 
 // ─── Virement ────────────────────────────────────────────────────────────────
 
-/** « J'ai effectué le virement » : le justificatif est facultatif. */
-export async function declareTransfer(orderNumber: string): Promise<ActionResult> {
-    const order = await findOrder(orderNumber);
-    if (!order) return NOT_FOUND;
-    if (order.paymentStatus === "VERIFYING" || order.paymentStatus === "PAID") {
-        return { ok: true };
-    }
-
-    const res = await prisma.order.updateMany({
-        where: { id: order.id, paymentStatus: { in: ["PENDING", "FAILED"] } },
-        data: { paymentStatus: "VERIFYING", paymentMethod: "BANK_TRANSFER" },
-    });
-    if (res.count === 0) {
-        return { ok: false, error: "Cette commande ne peut plus être modifiée." };
-    }
-
-    defer("email virement signalé", () => sendTransferDeclaredEmail(order.id));
-    defer("notif admin virement", () => notifyAdmin(order.id, "TRANSFER_DECLARED"));
-    refresh(orderNumber);
-    return { ok: true };
-}
+// Pas d'action « J'ai effectué le virement » : le justificatif est obligatoire et
+// c'est son envoi (api/orders/[orderNumber]/proof) qui fait passer la commande en
+// vérification.
 
 /** Bascule d'une commande carte non payée vers le virement. */
 export async function switchToBankTransfer(orderNumber: string): Promise<ActionResult> {

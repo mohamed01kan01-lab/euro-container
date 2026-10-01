@@ -200,7 +200,7 @@
                     },
                     {
                         "question": "Comment envoyer ma preuve de virement ?",
-                        "answer": "Sur la page de votre commande, cliquez sur « J'ai effectué le virement ». Vous pouvez y joindre la capture ou le PDF fourni par votre banque (PDF, JPG, PNG ou WEBP, 5 Mo maximum). La preuve est facultative, mais elle accélère la validation."
+                        "answer": "Une fois le virement effectué, ouvrez la page de votre commande et envoyez la capture ou le PDF fourni par votre banque (PDF, JPG, PNG ou WEBP, 5 Mo maximum). Ce justificatif est obligatoire : c'est lui qui nous signale votre paiement."
                     },
                     {
                         "question": "Quand ma commande est-elle confirmée ?",
@@ -370,7 +370,7 @@
                     "list": [
                         "Identité et contact : nom, email, téléphone, société et numéro de TVA le cas échéant.",
                         "Livraison : adresse et informations d'accès que vous nous communiquez.",
-                        "Commandes et paiements : contenu des commandes, montants, justificatifs de virement que vous choisissez d'envoyer, IBAN fourni pour un remboursement (conservé chiffré).",
+                        "Commandes et paiements : contenu des commandes, montants, justificatifs de virement que vous envoyez, IBAN fourni pour un remboursement (conservé chiffré).",
                         "Compte client : identifiants de connexion (le mot de passe est stocké sous forme chiffrée irréversible).",
                         "Données techniques strictement nécessaires : cookies de session, de panier et de préférences d'affichage."
                     ]

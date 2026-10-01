@@ -200,7 +200,7 @@
                     },
                     {
                         "question": "How do I send proof of transfer?",
-                        "answer": "On your order page, click “I've made the transfer”. You can attach the screenshot or PDF from your bank (PDF, JPG, PNG or WEBP, 5 MB max). Proof is optional but speeds up validation."
+                        "answer": "Once the transfer is made, open your order page and upload the screenshot or PDF from your bank (PDF, JPG, PNG or WEBP, 5 MB max). This proof is required: it is how we know you have paid."
                     },
                     {
                         "question": "When is my order confirmed?",

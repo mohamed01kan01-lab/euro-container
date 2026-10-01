@@ -110,10 +110,10 @@ export async function sendOrderReceivedEmail(orderId: string) {
             settings,
             preheader: `Votre commande est réservée${due ? ` jusqu'au ${due}` : ""}. Voici les coordonnées du virement.`,
             title: `Merci ${esc(order.customerName.split(" ")[0])}, votre commande est réservée`,
-            intro: `Il ne reste qu'une étape : effectuer un virement de <strong style="color:${C.ink};">${amount}</strong> en indiquant la référence <strong style="color:${C.ink};">${esc(order.orderNumber)}</strong>.${due ? ` Votre commande vous est réservée jusqu'au <strong style="color:${C.ink};">${due}</strong>.` : ""}`,
+            intro: `Il ne reste qu'une étape : effectuer un virement de <strong style="color:${C.ink};">${amount}</strong> en indiquant la référence <strong style="color:${C.ink};">${esc(order.orderNumber)}</strong>, puis nous envoyer la preuve de virement depuis votre commande.${due ? ` Votre commande vous est réservée jusqu'au <strong style="color:${C.ink};">${due}</strong>.` : ""}`,
             body: bankBlock(data) + summary(data),
             ctas: [
-                { label: "J'ai effectué le virement", url: `${url}#paiement` },
+                { label: "Envoyer ma preuve de virement", url: `${url}#paiement` },
                 { label: "Voir ma commande", url, secondary: true },
             ],
         }),
@@ -160,7 +160,7 @@ export async function sendPaymentReminderEmail(orderId: string, final: boolean) 
         : `Votre commande ${order.orderNumber} vous attend`;
 
     const intro = isTransfer
-        ? `Nous n'avons pas encore reçu votre virement de <strong style="color:${C.ink};">${amount}</strong>.${due ? ` Votre commande reste réservée jusqu'au <strong style="color:${C.ink};">${due}</strong>.` : ""} Si vous l'avez déjà effectué, signalez-le en un clic pour accélérer sa validation.`
+        ? `Nous n'avons pas encore reçu votre virement de <strong style="color:${C.ink};">${amount}</strong>.${due ? ` Votre commande reste réservée jusqu'au <strong style="color:${C.ink};">${due}</strong>.` : ""} Si vous l'avez déjà effectué, envoyez-nous la preuve de virement pour que nous puissions le valider.`
         : `Votre paiement de <strong style="color:${C.ink};">${amount}</strong> n'a pas été finalisé.${due ? ` Votre commande reste réservée jusqu'au <strong style="color:${C.ink};">${due}</strong>.` : ""} Reprenez-le en un clic, par carte ou par virement.`;
 
     await send({
@@ -175,7 +175,7 @@ export async function sendPaymentReminderEmail(orderId: string, final: boolean) 
             body: (isTransfer ? bankBlock(data) : "") + summary(data),
             ctas: isTransfer
                 ? [
-                      { label: "J'ai effectué le virement", url: `${url}#paiement` },
+                      { label: "Envoyer ma preuve de virement", url: `${url}#paiement` },
                       { label: "Voir ma commande", url, secondary: true },
                   ]
                 : [{ label: "Finaliser mon paiement", url }],

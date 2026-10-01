@@ -110,12 +110,14 @@ export function ProofDropzone({
                               ? `${sentName} envoyé`
                               : compact
                                 ? "Ajouter un justificatif"
-                                : "Joindre la preuve de virement (facultatif)"}
+                                : "Envoyer la preuve de virement"}
                     </span>
                     <span className="block text-xs text-muted-foreground">
                         {sentName
                             ? "Vous pouvez en ajouter un autre si besoin."
-                            : "Capture ou PDF de votre banque, 5 Mo max. Accélère la validation."}
+                            : compact
+                              ? "Capture ou PDF de votre banque, 5 Mo max."
+                              : "Une fois le virement fait, envoyez la capture ou le PDF de votre banque (5 Mo max). C'est ce document qui nous signale votre paiement."}
                     </span>
                 </span>
             </button>

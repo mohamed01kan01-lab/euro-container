@@ -1,17 +1,8 @@
 "use client";
 
-import { useTransition } from "react";
-import { useRouter } from "@/i18n/routing";
-import {
-    IconCheck,
-    IconClipboardList,
-    IconLoader2,
-    IconQrcode,
-} from "@tabler/icons-react";
-import { toast } from "sonner";
+import { IconCheck, IconClipboardList, IconQrcode } from "@tabler/icons-react";
 import { Button } from "@/components/public/button";
 import { formatIban } from "@/lib/bank";
-import { declareTransfer } from "@/app/[locale]/(public)/order/actions";
 import { CopyRow, useCopy } from "./copy-button";
 import { ProofDropzone } from "./proof-dropzone";
 
@@ -32,7 +23,7 @@ interface BankTransferPanelProps {
     bank: PublicBankDetails;
     /** SVG du QR code SEPA, absent si la devise n'est pas l'euro. */
     qrSvg: string | null;
-    /** true une fois le virement signalé : on ne propose plus que l'ajout de justificatif. */
+    /** true une fois un justificatif reçu : on ne propose plus que l'ajout d'un autre. */
     declared: boolean;
 }
 
@@ -44,8 +35,6 @@ export function BankTransferPanel({
     qrSvg,
     declared,
 }: BankTransferPanelProps) {
-    const router = useRouter();
-    const [pending, startTransition] = useTransition();
     const { copied, copy } = useCopy();
 
     // Montant au format attendu par les applis bancaires françaises : 4890,00
@@ -63,18 +52,6 @@ export function BankTransferPanel({
     ]
         .filter(Boolean)
         .join("\n");
-
-    function onDeclare() {
-        startTransition(async () => {
-            const res = await declareTransfer(orderNumber);
-            if (res.ok) {
-                toast.success("Merci ! Nous vérifions votre virement.");
-                router.refresh();
-            } else {
-                toast.error(res.error);
-            }
-        });
-    }
 
     return (
         <div className="space-y-5">
@@ -149,21 +126,9 @@ export function BankTransferPanel({
                 </p>
             )}
 
-            <div id="paiement" className="scroll-mt-24 space-y-3">
+            {/* Le justificatif est obligatoire : c'est son envoi qui signale le virement. */}
+            <div id="paiement" className="scroll-mt-24">
                 <ProofDropzone orderNumber={orderNumber} compact={declared} />
-                {!declared && (
-                    <Button
-                        type="button"
-                        variant="accent"
-                        size="lg"
-                        className="w-full"
-                        disabled={pending}
-                        onClick={onDeclare}
-                    >
-                        {pending ? <IconLoader2 className="animate-spin" /> : <IconCheck />}
-                        J&apos;ai effectué le virement
-                    </Button>
-                )}
             </div>
         </div>
     );
