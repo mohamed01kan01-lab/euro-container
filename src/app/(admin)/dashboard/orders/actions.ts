@@ -54,6 +54,9 @@ export interface OrderRow {
     paymentStatus: PaymentStatus;
     shippingStatus: ShippingStatus;
     createdAt: Date;
+    /** Dernier justificatif reçu, consultable directement depuis la liste. */
+    latestProof: { id: string; originalName: string } | null;
+    proofCount: number;
 }
 
 export interface ShippingAddress {
@@ -173,6 +176,14 @@ export async function getOrders(filters: {
                 ],
             }),
         },
+        include: {
+            paymentProofs: {
+                select: { id: true, originalName: true },
+                orderBy: { createdAt: "desc" },
+                take: 1,
+            },
+            _count: { select: { paymentProofs: true } },
+        },
         orderBy: { createdAt: "desc" },
         take: 200,
     });
@@ -187,6 +198,8 @@ export async function getOrders(filters: {
         paymentStatus: o.paymentStatus,
         shippingStatus: o.shippingStatus,
         createdAt: o.createdAt,
+        latestProof: o.paymentProofs[0] ?? null,
+        proofCount: o._count.paymentProofs,
     }));
 }
 
